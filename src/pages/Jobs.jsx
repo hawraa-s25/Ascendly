@@ -1,5 +1,5 @@
 import React from "react"
-import "./Jobs.css"
+import "./jobs.css"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { 
     doc, 
@@ -108,22 +108,28 @@ export default function Jobs(props){
     },[])
 
     React.useEffect(()=>{
-        if (user){
-           const updateProfileURLInDocs = async () => {
-                const jobsRef = collection(db, "jobs")
-                const jobsSnapshot = await onSnapshot(jobsRef, async (snapshot) => {
-                    snapshot.docs.forEach(async (docSnap) => {
-                        const job = docSnap.data()
-                        if (job.createdBy?.authorId === user.uid && job.createdBy?.profileURL !== profile.profileURL) {
+    if (user && profile?.profileURL){
+       const updateProfileURLInDocs = async () => {
+            const jobsRef = collection(db, "jobs")
+            const unsubscribe = onSnapshot(jobsRef, (snapshot) => {
+                snapshot.docs.forEach(async (docSnap) => {
+                    const job = docSnap.data()
+                    if (job.createdBy?.authorId === user.uid && job.createdBy?.profileURL !== profile.profileURL) {
+                        try {
                             await updateDoc(doc(db, "jobs", docSnap.id), {
                                 "createdBy.profileURL": profile.profileURL
                             })
+                        } catch (error) {
+                            console.error("Failed to update profile URL:", error)
                         }
-                    })
-            })}
-            updateProfileURLInDocs() 
+                    }
+                })
+            })
+            return unsubscribe
         }
-    },[profile?.profileURL, user])
+        updateProfileURLInDocs() 
+    }
+},[profile?.profileURL, user])
 
     /* CRUD Functions */
 
@@ -222,12 +228,17 @@ export default function Jobs(props){
             const jobRef = await addItemToDatabase(collectionName, finalJobData)
             
             try {
-                const jobResult = await createEmbeddings({
-                    text: finalJobData.description + " " + finalJobData.title
-                })
-                await updateDoc(doc(db, collectionName, jobRef.id), {
-                    jobEmbedding: jobResult.data.embedding
-                })
+                // FIXED: Remove wrapper object and handle response correctly
+                const jobResult = await createEmbeddings(finalJobData.description + " " + finalJobData.title)
+                
+                // FIXED: Check if embedding exists in response
+                if (jobResult && jobResult.embedding) {
+                    await updateDoc(doc(db, collectionName, jobRef.id), {
+                        jobEmbedding: jobResult.embedding
+                    })
+                } else {
+                    console.warn("No embedding generated for job")
+                }
             } catch (embeddingError) {
                 console.warn("Embedding creation failed, but job was created:", embeddingError)
             }
@@ -273,12 +284,19 @@ export default function Jobs(props){
         
         showStatus("Searching jobs...", "loading")
         try{
-            const queryEmbedding = await createEmbeddings({ text: searchText })
-            calculateSimilarity(allJobs, "jobEmbedding", queryEmbedding.data.embedding, setAllJobs)
-            showStatus(`Search completed for "${searchText}"`, "success")
+            // FIXED: Remove wrapper object
+            const queryEmbedding = await createEmbeddings(searchText)
+            
+            // FIXED: Check if embedding exists and use correct property
+            if (queryEmbedding && queryEmbedding.embedding) {
+                calculateSimilarity(allJobs, "jobEmbedding", queryEmbedding.embedding, setAllJobs)
+                showStatus(`Search completed for "${searchText}"`, "success")
+            } else {
+                throw new Error("No embedding generated for search")
+            }
         } catch(error){
             console.error(error)
-            showStatus("Search failed", "error")
+            showStatus("Search failed: " + (error.message || "Unknown error"), "error")
         }
     }
 
@@ -943,5 +961,4 @@ export default function Jobs(props){
         </div>}
         </>
     )
-
 }
