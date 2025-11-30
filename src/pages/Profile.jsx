@@ -155,22 +155,56 @@ export default function Profile(props){
         if (file) {
             showStatus("Uploading and processing resume...", "loading")
             try{
+                // Upload to Firebase Storage
                 const resumeURL = await UploadResumeToStorage(file)
+                
+                // Read file as base64 for Vercel API
+                const fileData = await new Promise((resolve) => {
+                    const reader = new FileReader()
+                    reader.onload = (e) => {
+                        // Get base64 data (remove the data:application/pdf;base64, prefix)
+                        const base64 = e.target.result.split(',')[1]
+                        resolve(base64)
+                    }
+                    reader.readAsDataURL(file)
+                })
+
                 await new Promise(resolve => setTimeout(resolve, 1000))
-                const result = await extractData({userId: user.uid, fileName: file.name})
-                props.setResumeText(result.data.extractedText)
-                console.log("Extracted Text", result.data.extractedText)
+                
+                // FIXED: Call Vercel API with base64 data
+                const result = await extractData(fileData)
+                
+                // FIXED: Check for errors and handle response
+                if (result.error) {
+                    throw new Error(result.error)
+                }
+                
+                if (!result.extractedText) {
+                    throw new Error("No text extracted from resume")
+                }
+                
+                console.log("Extracted Text", result.extractedText)
+                
+                // Save to Firestore
                 await updateDoc(doc(db, "profile", user.uid), {
                     ...userData,
-                    resumeText: result.data.extractedText,
+                    resumeText: result.extractedText,
                     resumeURL: resumeURL,
                     resumeName: file.name
                 })
-                setUserData(prev => ({ ...prev, resumeURL: resumeURL, resumeName:file.name }))
+                
+                setUserData(prev => ({ 
+                    ...prev, 
+                    resumeText: result.extractedText,
+                    resumeURL: resumeURL, 
+                    resumeName: file.name 
+                }))
+                
+                props.setResumeText(result.extractedText)
                 showStatus("Resume uploaded and processed successfully!", "success")
             } catch(error){
-                console.error(error.message)
-                showStatus("Failed to upload resume", "error")
+                console.error("Resume processing error:", error)
+                showStatus("Failed to process resume: " + (error.message || "Unknown error"), "error")
             }
         }
     }
@@ -268,11 +302,20 @@ export default function Profile(props){
         try {
             await updateDoc(doc(db, "profile", user.uid), {
                 resumeURL: "",
-                resumeName: ""
+                resumeName: "",
+                resumeText: ""
             })
-            const fileRef = ref(storage, `uploads/${user.uid}/${userData.resumeName}`)
-            await deleteObject(fileRef)
-            setUserData(prev => ({ ...prev, resumeURL: "", resumeName: "" }))
+            if (userData.resumeName) {
+                const fileRef = ref(storage, `uploads/${user.uid}/${userData.resumeName}`)
+                await deleteObject(fileRef)
+            }
+            setUserData(prev => ({ 
+                ...prev, 
+                resumeURL: "", 
+                resumeName: "",
+                resumeText: "" 
+            }))
+            props.setResumeText("")
             showStatus("Resume deleted successfully!", "success")
         } catch (error) {
             console.error("Error deleting resume:", error)
