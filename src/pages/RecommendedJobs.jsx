@@ -68,7 +68,7 @@ export default function RecommendedJobs(){
         
         try {
             console.log("Calling function...")
-            const resumeEmbeddings = await createEmbeddings({
+            /*const resumeEmbeddings = await createEmbeddings({
                 text: resumeText
             })
             
@@ -81,6 +81,23 @@ export default function RecommendedJobs(){
                 return {
                     ...job,
                     score: cosineSimilarity(resumeEmbeddings.data.embedding, jobEmbed)
+            }}).filter(Boolean)*/
+            const resumeEmbeddings = await createEmbeddings(resumeText) // Remove the wrapper object
+
+            console.log("Success for resume:", resumeEmbeddings)
+            console.log("Success for job:", jobEmbeddings)
+
+            // Check if embedding exists in the response
+            if (!resumeEmbeddings || !resumeEmbeddings.embedding) {
+                throw new Error("No embedding generated for resume")
+            }
+
+            const similarities = allJobs.map((job,index)=>{
+                const jobEmbed = jobEmbeddings && jobEmbeddings[index]
+                if (!jobEmbed) return null
+                return {
+                    ...job,
+                    score: cosineSimilarity(resumeEmbeddings.embedding, jobEmbed) // Remove .data
             }}).filter(Boolean)
             similarities.sort((a,b)=> b.score - a.score)
             const topJobs = similarities.slice(0,10)
