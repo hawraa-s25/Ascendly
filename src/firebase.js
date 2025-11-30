@@ -2,7 +2,6 @@ import { initializeApp } from "firebase/app"
 import { getFirestore } from "firebase/firestore"
 import { getAuth, GoogleAuthProvider } from "firebase/auth"
 import { getStorage } from "firebase/storage"
-import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions"
 import { getDatabase } from "firebase/database"
 
 const firebaseConfig = {
@@ -14,20 +13,59 @@ const firebaseConfig = {
   appId: "1:1024622385350:web:03ccbbb12f416ac10b5fc7"
 }
 
-// Initialize Firebase
+// Initialize Firebase (keep this for auth/storage)
 const app = initializeApp(firebaseConfig)
 
-// Services
+// Services (keep these for Firebase Auth/Storage)
 const db = getFirestore(app)
 const auth = getAuth(app)
 const provider = new GoogleAuthProvider()
 const storage = getStorage(app)
-const functions = getFunctions(app)
 const realTimeDB = getDatabase()
+
+// REMOVED: All Functions-related code
+// REMOVED: getFunctions, connectFunctionsEmulator, httpsCallable
+
+// NEW: Vercel API functions
+export const summarizedBlog = async (content) => {
+  const response = await fetch('/api/summarizedBlog', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }) // This is correct
+  })
+  return response.json()
+}
+
+export const createEmbeddings = async (text) => {
+  const response = await fetch('/api/createEmbeddings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }) // This sends { text: "your text" }
+  })
+  return response.json() // This returns { embedding: [...] }
+}
+
+export const extractData = async (fileData) => {
+  const response = await fetch('/api/extractData', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fileData })
+  })
+  return response.json()
+}
+
+
+// Exports (removed functions)
+export { app, db, auth, provider, storage, realTimeDB }
+
+
+
+
+
 
 
 // Enable emulator in development mode
-if (location.hostname === "localhost") {
+/*if (location.hostname === "localhost") {
   // Firebase emulator default port for functions is 5001
   connectFunctionsEmulator(functions, "localhost", 5001)
 }
@@ -35,18 +73,7 @@ if (location.hostname === "localhost") {
 // Callable function
 export const summarizedBlog = httpsCallable(functions, "summarizedBlog")
 export const extractData = httpsCallable(functions, "extractData")
-export const createEmbeddings = httpsCallable(functions, "createEmbeddings")
-
-// Exports
-export { app, db, auth, provider, storage, functions, realTimeDB }
-
-
-
-
-
-
-
-
+export const createEmbeddings = httpsCallable(functions, "createEmbeddings")*/
 
 // // src/firebase.js
 // import { initializeApp } from "firebase/app"
