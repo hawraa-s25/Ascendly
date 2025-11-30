@@ -1,0 +1,289 @@
+body {
+  margin: 0;
+  font-family: 'Inter',sans-serif;
+}
+
+.container {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #F6F1E8, #A8D5BA);
+}
+
+.Signin, .SignUp{
+  background-color: #FCF8F3;
+  width: 55%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  border-top-left-radius: 40px;
+  border-bottom-left-radius: 40px;
+  padding: 0 7rem;
+  box-sizing: border-box;
+  gap: 5px;
+  color: #2B3142;
+}
+
+.SignUp p{
+  margin-top: -0.5rem;
+}
+
+.Signin p{
+  color: #82858b;
+  font-size: 15px;
+  margin: 1.5rem;
+  margin-left: 0px;
+}
+
+.sign-up-text{
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+  line-height: 0.1em;
+  margin: 20px 0 30px;
+}
+
+.sign-up-text span{
+  background: #FCF8F3;
+  padding: 0 10px;
+}
+
+#google img{
+  width: 20px;
+  height: 20px;
+}
+
+#google, .sign-in-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap:10px;
+  background-color: #F5F1E8;
+  margin-bottom: 5px;
+}
+
+.Signin button, input {
+  border-radius: 20px;
+  width: 100%;
+  height: 40px;
+  cursor: pointer;
+}
+
+.SignUp button, input {
+  border-radius: 20px;
+  width: 100%;
+  height: 40px;
+  cursor: pointer;
+  border: none; 
+}
+
+#inputs{
+  display: flex;
+  flex-direction: column;
+}
+
+#inputs input, .email-password input{
+  background-color: #F5F1E8;
+  padding-left: 20px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+#inputs input:focus{
+  outline: none;
+}
+
+.Signin #inputs{
+  display: flex;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+#inputs label{
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.password-view{
+  position: relative;
+  width: 100%;
+}
+
+#toggle-password{
+  position: absolute;
+  right: 1%;
+  top: 43%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #82858b;
+  cursor: pointer;
+}
+
+.reset-pass-link{
+  text-align: right;
+  font-size: 15px;
+  margin-bottom: 1rem;
+  text-decoration: none;
+  color: #7FB69E;
+}
+
+.SignUp #inputs, .name-input{
+  display: flex;
+  flex-direction: column;
+}
+
+.SignUp #user-name, #credentials, .userType-option{
+  display: flex;
+  gap: 2rem;
+}
+
+#user-name input, #credentials input{
+  width: 205px;
+}
+
+#user-name{
+  margin-top: 1rem;
+}
+
+.userType-option {
+  display: flex;
+  gap: 20px;
+}
+
+.custom-radio {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.custom-radio input {
+  appearance: none;
+  display: none;
+}
+
+.custom-radio span {
+  display: inline-block;
+  align-items: center;
+  text-align: center;
+  padding: 0.5rem;
+  border: 2px solid #82858b4d;
+  border-radius: 8px;
+  font-weight:600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+  user-select: none;
+  height: 25px;
+  width: 100px;
+}
+
+.custom-radio input:checked + span {
+  border-color: #A8D5BA;
+  background-color: #a8d5ba31;
+}
+
+.SignUp .sign-up-btn{
+  border: 1px solid #a8d5ba42;
+}
+
+.rightSide{
+  width: 50%;
+  min-height: 100%;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.rightSide img{
+  margin-top: -10rem;
+  width: 300px;
+  height: 100px;
+  margin-bottom: 2rem;
+  margin-right: auto;
+}
+
+.rightSide h1{
+  color: #2B3142;
+  font-weight: 500;
+  font-size: 40px;
+  margin-bottom: -0.2rem;
+}
+
+.rightSide p{
+  font-size: 20px;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 1rem;
+  margin-left: 3rem;
+}
+
+.feature svg {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  background-color: #7fb69e56;
+  padding: 1rem;
+  border-radius: 50%;
+}
+
+.feature-text {
+  flex: 1;
+}
+
+.feature-text h3 {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.feature-text p {
+  font-size: 17px;
+}
+
+.email-password{
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.email-password input{
+  width: 95%;
+}
+
+.email-password input:focus{
+  outline: none;
+}
+
+.back-sign-in{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2B3142;
+  background: transparent;
+  max-width: 160px;
+  padding: 1rem;
+  border-radius: 10px !important;
+  gap: 0.5rem;
+}
+
+.back-sign-in:hover{
+  background-color: #A8D5BA;
+}
+
+#reset-pass-btn, .sign-in-btn{
+  margin-bottom: 1rem;
+}
