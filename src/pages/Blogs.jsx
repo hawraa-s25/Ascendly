@@ -166,10 +166,16 @@ export default function Blogs(props){
             }
             const docRef = await addItemToDatabase(collectionName, finalBlogData)
             try {
-                const blogEmbedding = await createEmbeddings({ text: blogPostData.content })
+                /*const blogEmbedding = await createEmbeddings({ text: blogPostData.content })
                 await updateDoc(doc(db, collectionName, docRef.id), { 
                     blogEmbedding: blogEmbedding.data.embedding 
-                })
+                })*/
+                const blogEmbedding = await createEmbeddings(blogPostData.content)
+                if (blogEmbedding && blogEmbedding.embedding) {
+                    await updateDoc(doc(db, collectionName, docRef.id), { 
+                        blogEmbedding: blogEmbedding.embedding 
+                    })
+                }
             } catch (embeddingError) {
                 console.warn("Embedding creation failed, but blog was created:", embeddingError)
             }
@@ -280,7 +286,7 @@ export default function Blogs(props){
         }
     }
 
-    async function handleSummarize(blogContent, blogId){
+    /*async function handleSummarize(blogContent, blogId){
         showStatus("Generating summary...", "loading")
         try {
             const blog = allBlogs.find(b => b.id === blogId)
@@ -298,6 +304,33 @@ export default function Blogs(props){
             console.error(error)
             showStatus("Failed to generate summary", "error")
         }
+    }*/
+
+    async function handleSummarize(blogContent, blogId){
+        showStatus("Generating summary...", "loading")
+        try {
+            const blog = allBlogs.find(b => b.id === blogId)
+            if(!blog) throw new Error("Blog not found")
+            
+            if(!blog.summary){
+                // Remove the { content: blogContent } wrapper - just pass the content directly
+                const result = await summarizedBlog(blogContent)
+                
+                // Check if the response has the summary
+                if (!result || !result.summary) {
+                    throw new Error("No summary returned from API")
+                }
+                
+                setAllBlogs(prev => prev.map(b => b.id===blogId ? {...b, summary: result.summary, isSummaryReady: true} : b))
+                showStatus("Summary generated successfully!", "success")
+            } else {
+                setAllBlogs(prev => prev.map(b => b.id===blogId ? {...b, isSummaryReady: !b.isSummaryReady} : b))
+                hideStatus()
+            }
+        } catch(error){
+            console.error("Summary error:", error)
+            showStatus("Failed to generate summary: " + (error.message || "Unknown error"), "error")
+        }
     }
 
     async function searchBlog(){
@@ -308,8 +341,14 @@ export default function Blogs(props){
         
         showStatus("Searching blogs...", "loading")
         try{
-            const queryEmbedding = await createEmbeddings({ text: searchText })
-            calculateSimilarity(allBlogs, "blogEmbedding", queryEmbedding.data.embedding, setAllBlogs)
+            /*const queryEmbedding = await createEmbeddings({ text: searchText })
+            calculateSimilarity(allBlogs, "blogEmbedding", queryEmbedding.data.embedding, setAllBlogs)*/
+            const queryEmbedding = await createEmbeddings(searchText)
+            if (queryEmbedding && queryEmbedding.embedding) {
+                calculateSimilarity(allBlogs, "blogEmbedding", queryEmbedding.embedding, setAllBlogs)
+            } else {
+                throw new Error("Failed to generate embeddings for search")
+            }
             showStatus(`Search completed for "${searchText}"`, "success")
         } catch(error){
             console.error(error)
