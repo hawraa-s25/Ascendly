@@ -1,5 +1,5 @@
 import React from "react"
-import "./jobs.css"
+import "./Jobs.css"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { 
     doc, 
@@ -943,4 +943,5 @@ export default function Jobs(props){
         </div>}
         </>
     )
+
 }
