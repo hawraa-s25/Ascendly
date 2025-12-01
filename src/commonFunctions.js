@@ -73,6 +73,12 @@ export function resetPostData(type, userInfo) {
             applicationURL: "",
             location: "",
             jobType: "",
+            salary: {
+                min: "",
+                max: "",
+                currency: "USD",
+                period: "year"
+            },
             tags: [],
             isActive: false,
             ...base
@@ -130,4 +136,5 @@ export async function uploadImages(file){
         console.error("Error: ", error.message)
         return null
     }
+
 }
