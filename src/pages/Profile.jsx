@@ -150,62 +150,108 @@ export default function Profile(props){
         }
     }
 
-    async function handleResumeChange(e){
+    async function handleResumeChange(e) {
         const file = e.target.files[0]
-        if (file) {
-            showStatus("Uploading and processing resume...", "loading")
-            try{
-                // Upload to Firebase Storage
-                const resumeURL = await UploadResumeToStorage(file)
-                
-                // Read file as base64 for Vercel API
-                const fileData = await new Promise((resolve) => {
-                    const reader = new FileReader()
-                    reader.onload = (e) => {
-                        // Get base64 data (remove the data:application/pdf;base64, prefix)
-                        const base64 = e.target.result.split(',')[1]
-                        resolve(base64)
-                    }
-                    reader.readAsDataURL(file)
-                })
+        if (!file) return
+        
+        const fileExtension = file.name.split('.').pop().toLowerCase()
+        const allowedExtensions = ['pdf', 'doc', 'docx']
 
-                await new Promise(resolve => setTimeout(resolve, 1000))
+        if (!allowedExtensions.includes(fileExtension)) {
+            showStatus(
+                `Unsupported file type: .${fileExtension}. ` +
+                `Please upload a PDF (.pdf) or Word document (.doc, .docx).`,
+                "error"
+            )
+            e.target.value = ''
+            return
+        }
+        showStatus("Uploading and processing document...", "loading")
+
+        try {
+            const resumeURL = await UploadResumeToStorage(file)
+            const fileData = await new Promise((resolve, reject) => {
+                const reader = new FileReader()
                 
-                // FIXED: Call Vercel API with base64 data
-                const result = await extractData(fileData)
-                
-                // FIXED: Check for errors and handle response
-                if (result.error) {
-                    throw new Error(result.error)
+                reader.onload = (event) => {
+                    const base64Data = event.target.result.split(',')[1]
+                    resolve(base64Data)
                 }
                 
-                if (!result.extractedText) {
-                    throw new Error("No text extracted from resume")
+                reader.onerror = () => {
+                    reject(new Error("Failed to read the file. It may be corrupted."))
                 }
-                
-                console.log("Extracted Text", result.extractedText)
-                
-                // Save to Firestore
-                await updateDoc(doc(db, "profile", user.uid), {
-                    ...userData,
-                    resumeText: result.extractedText,
-                    resumeURL: resumeURL,
-                    resumeName: file.name
+
+                reader.readAsDataURL(file)
+            })
+
+            showStatus("Extracting text from document...", "loading")
+            
+            const response = await fetch('/api/extractData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fileData: fileData,
+                    fileType: fileExtension,
+                    fileName: file.name
                 })
-                
-                setUserData(prev => ({ 
-                    ...prev, 
-                    resumeText: result.extractedText,
-                    resumeURL: resumeURL, 
-                    resumeName: file.name 
-                }))
-                
-                props.setResumeText(result.extractedText)
-                showStatus("Resume uploaded and processed successfully!", "success")
-            } catch(error){
-                console.error("Resume processing error:", error)
-                showStatus("Failed to process resume: " + (error.message || "Unknown error"), "error")
+            })
+
+            const result = await response.json()
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || `API Error: ${response.status}`)
             }
+
+            if (!result.extractedText || result.extractedText.trim().length === 0) {
+                throw new Error("The document appears to be empty or no text could be extracted.")
+            }
+
+            console.log(`Extracted ${result.characterCount} characters from ${file.name}:`, 
+                        result.extractedText.substring(0, 200) + "...")
+
+            await updateDoc(doc(db, "profile", user.uid), {
+                ...userData, 
+                resumeText: result.extractedText,
+                resumeURL: resumeURL
+            })
+
+            setUserData(prev => ({ 
+                ...prev, 
+                resumeText: result.extractedText,
+                resumeURL: resumeURL,
+                resumeName: file.name,
+            }))
+
+            if (props.setResumeText) {
+                props.setResumeText(result.extractedText)
+            }
+e
+            showStatus(
+                `Successfully processed ${file.name}! ` +
+                `Extracted ${result.characterCount} characters.`,
+                "success"
+            )
+
+        } catch (error) {
+            console.error("Document processing error:", error)
+            let userMessage = error.message
+            
+            if (error.message.includes("Failed to fetch") || 
+                error.message.includes("NetworkError")) {
+                userMessage = "Network error. Please check your internet connection and try again."
+            } else if (error.message.includes("corrupt") || 
+                    error.message.includes("corrupted")) {
+                userMessage = "The file appears to be corrupted. Please try a different file."
+            } else if (error.message.includes("password")) {
+                userMessage = "The document is password protected. Please remove the password and try again."
+            } else if (error.message.includes("empty")) {
+                userMessage = "The document appears to be empty or contains no text."
+            }
+            
+            showStatus(`Failed to process document: ${userMessage}`, "error")
         }
     }
 
@@ -784,7 +830,7 @@ export default function Profile(props){
                             type="file"
                             onChange={handleResumeChange}
                             className="file-input"
-                            accept=".pdf"
+                            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                             disabled={statusPopup.type === "loading"}
                         />
                     </div> : 
