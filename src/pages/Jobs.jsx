@@ -46,6 +46,12 @@ export default function Jobs(props){
         applicationURL: "",
         location: "",
         jobType: "",
+        salary: {
+            min: "",
+            max: "",
+            currency: "USD",
+            period: "year" 
+        },
         tags: [],
         isActive: false,
         jobEmbedding: []
@@ -54,6 +60,7 @@ export default function Jobs(props){
     const [isCreatingPost, setCreating] = React.useState(false)
     const [isFiltering, setFiltering] = React.useState(false)
     const [allJobs, setAllJobs] = React.useState([])
+    const [filteredJobs, setFilteredJobs] = React.useState([])
     const [editing, setEditing] = React.useState({
         jobID: null,
         isEditing: false
@@ -67,6 +74,8 @@ export default function Jobs(props){
     const [filter, setFilter] = React.useState({
         jobType: "all",
         location: "all",
+        salaryMin: "",
+        salaryMax: ""
     })
     const [statusPopup, setStatusPopup] = React.useState({
         show: false,
@@ -96,7 +105,10 @@ export default function Jobs(props){
         const loadJobs = async () => {
             showStatus("Loading jobs...", "loading")
             try {
-                const unsubscribe = fetchItemData(collectionName, setAllJobs)
+                const unsubscribe = fetchItemData(collectionName, (jobs) => {
+                    setAllJobs(jobs)
+                    setFilteredJobs(jobs)
+                })
                 showStatus("Jobs loaded successfully!", "success")
                 return ()=>unsubscribe()
             } catch (error) {
@@ -108,28 +120,28 @@ export default function Jobs(props){
     },[])
 
     React.useEffect(()=>{
-    if (user && profile?.profileURL){
-       const updateProfileURLInDocs = async () => {
-            const jobsRef = collection(db, "jobs")
-            const unsubscribe = onSnapshot(jobsRef, (snapshot) => {
-                snapshot.docs.forEach(async (docSnap) => {
-                    const job = docSnap.data()
-                    if (job.createdBy?.authorId === user.uid && job.createdBy?.profileURL !== profile.profileURL) {
-                        try {
-                            await updateDoc(doc(db, "jobs", docSnap.id), {
-                                "createdBy.profileURL": profile.profileURL
-                            })
-                        } catch (error) {
-                            console.error("Failed to update profile URL:", error)
+        if (user && profile?.profileURL){
+        const updateProfileURLInDocs = async () => {
+                const jobsRef = collection(db, "jobs")
+                const unsubscribe = onSnapshot(jobsRef, (snapshot) => {
+                    snapshot.docs.forEach(async (docSnap) => {
+                        const job = docSnap.data()
+                        if (job.createdBy?.authorId === user.uid && job.createdBy?.profileURL !== profile.profileURL) {
+                            try {
+                                await updateDoc(doc(db, "jobs", docSnap.id), {
+                                    "createdBy.profileURL": profile.profileURL
+                                })
+                            } catch (error) {
+                                console.error("Failed to update profile URL:", error)
+                            }
                         }
-                    }
+                    })
                 })
-            })
-            return unsubscribe
+                return unsubscribe
+            }
+            updateProfileURLInDocs() 
         }
-        updateProfileURLInDocs() 
-    }
-},[profile?.profileURL, user])
+    },[profile?.profileURL, user])
 
     /* CRUD Functions */
 
@@ -174,6 +186,7 @@ export default function Jobs(props){
                 applicationURL: jobPostData.applicationURL,
                 location: jobPostData.location,
                 jobType: jobPostData.jobType,
+                salary: jobPostData.salary,
                 tags: [],
                 isActive: true
             }
@@ -209,6 +222,46 @@ export default function Jobs(props){
         }
     }
 
+    function handleSalaryChange(e) {
+        const { name, value } = e.target
+        const [field, subfield] = name.split('.')
+        
+        if (subfield) {
+            setJobData(prev => ({
+                ...prev,
+                [field]: {
+                    ...prev[field],
+                    [subfield]: value
+                }
+            }))
+        }
+    }
+
+    function formatSalary(salary) {
+        if (!salary || (!salary.min && !salary.max)) return "Salary not specified"
+        
+        const { min, max, currency, period } = salary
+        const currencySymbol = {
+            'USD': '$',
+            'EUR': '€',
+            'LBP': 'lbp'
+        }[currency] || currency
+        
+        const periodText = {
+            'year': 'yr',
+            'month': 'mo',
+            'hour': 'hr'
+        }[period] || period
+        
+        if (min && max) {
+            return `${min} - ${max}/${periodText} ${currencySymbol}`
+        } else if (min) {
+            return `From ${min}/${periodText}`
+        } else if (max) {
+            return `Up to ${max}/${periodText}`
+        }
+    }
+
     async function handleSubmitApplication(e){
         e.preventDefault()
         showStatus("Creating job post...", "loading")
@@ -228,10 +281,7 @@ export default function Jobs(props){
             const jobRef = await addItemToDatabase(collectionName, finalJobData)
             
             try {
-                // FIXED: Remove wrapper object and handle response correctly
                 const jobResult = await createEmbeddings(finalJobData.description + " " + finalJobData.title)
-                
-                // FIXED: Check if embedding exists in response
                 if (jobResult && jobResult.embedding) {
                     await updateDoc(doc(db, collectionName, jobRef.id), {
                         jobEmbedding: jobResult.embedding
@@ -284,12 +334,9 @@ export default function Jobs(props){
         
         showStatus("Searching jobs...", "loading")
         try{
-            // FIXED: Remove wrapper object
             const queryEmbedding = await createEmbeddings(searchText)
-            
-            // FIXED: Check if embedding exists and use correct property
             if (queryEmbedding && queryEmbedding.embedding) {
-                calculateSimilarity(allJobs, "jobEmbedding", queryEmbedding.embedding, setAllJobs)
+                calculateSimilarity(allJobs, "jobEmbedding", queryEmbedding.embedding, setFilteredJobs)
                 showStatus(`Search completed for "${searchText}"`, "success")
             } else {
                 throw new Error("No embedding generated for search")
@@ -304,31 +351,70 @@ export default function Jobs(props){
         setFiltering(prev => !prev)
     }
 
+    function applyFilters() {
+        let filtered = [...allJobs]
+        
+        if (filter.jobType !== "all") {
+            filtered = filtered.filter(job => 
+                job.jobType?.toLowerCase() === filter.jobType.toLowerCase()
+            )
+        }
+        
+        if (filter.location !== "all") {
+            if (filter.location === "remote") {
+                filtered = filtered.filter(job => 
+                    job.location?.toLowerCase() === "remote"
+                )
+            } else if (filter.location === "on-site") {
+                filtered = filtered.filter(job => 
+                    job.location?.toLowerCase() !== "remote" && job.location
+                )
+            } else if (filter.location === "hybrid") {
+                filtered = filtered.filter(job => 
+                    job.location?.toLowerCase().includes("hybrid")
+                )
+            }
+        }
+
+        if (filter.salaryMin) {
+            filtered = filtered.filter(job => {
+                const salaryNum = job.salary?.min ? parseFloat(job.salary.min) : 0
+                return salaryNum >= parseFloat(filter.salaryMin)
+            })
+        }
+        
+        if (filter.salaryMax) {
+            filtered = filtered.filter(job => {
+                const salaryNum = job.salary?.max ? parseFloat(job.salary.max) : Infinity
+                return salaryNum <= parseFloat(filter.salaryMax)
+            })
+        }
+        
+        setFilteredJobs(filtered)
+        return filtered
+    }
+
     async function handleApplyFilters(){
         showStatus("Applying filters...", "loading")
         try {
-            const jobRef = collection(db, collectionName)
-            const filtersChosen = []
-            
-            if (filter.jobType != "all"){
-                filtersChosen.push(where("jobType", "==", filter.jobType.toLowerCase()))
-            }
-
-            if (filter.location == "on-site"){
-                filtersChosen.push(where("location", "!=", "remote"))
-            } else if (filter.location != "all"){
-                filtersChosen.push(where("location", "==", filter.location.toLowerCase()))
-            }
-
-            const q = query(jobRef, ...filtersChosen)
-            const snapshot = await getDocs(q)
-            const filteredJobs = snapshot.docs.map( doc => ({id: doc.id, ...doc.data()}))
-            setAllJobs(filteredJobs)
-            showStatus("Filters applied successfully!", "success")
+            const result = applyFilters()
+            showStatus(`Found ${result.length} jobs`, "success")
+            setFiltering(false)
         } catch(error) {
             console.error(error)
             showStatus("Failed to apply filters", "error")
         }
+    }
+
+    function handleClearFilters() {
+        setFilter({
+            jobType: "all",
+            location: "all",
+            salaryMin: "",
+            salaryMax: ""
+        })
+        setFilteredJobs(allJobs)
+        showStatus("Filters cleared", "success")
     }
 
     async function deleteJobPost(docID){
@@ -502,6 +588,58 @@ export default function Jobs(props){
                                 />
                             )}
                         </div>
+
+                        <label>Salary</label>
+                        <div className="salary-input-group">
+                            <div className="salary-row">
+                                <div className="salary-field">
+                                    <input
+                                        type="number"
+                                        name="salary.min"
+                                        value={jobPostData.salary?.min || ""}
+                                        onChange={handleSalaryChange}
+                                        placeholder="Min"
+                                        min="0"
+                                        disabled={statusPopup.type === "loading"}
+                                    />
+                                </div>
+                                <span className="salary-separator">to</span>
+                                <div className="salary-field">
+                                    <input
+                                        type="number"
+                                        name="salary.max"
+                                        value={jobPostData.salary?.max || ""}
+                                        onChange={handleSalaryChange}
+                                        placeholder="Max"
+                                        min="0"
+                                        disabled={statusPopup.type === "loading"}
+                                    />
+                                </div>
+                            </div>
+                            <label>Period</label>
+                            <select 
+                                name="salary.period"
+                                value={jobPostData.salary?.period || "year"}
+                                onChange={handleSalaryChange}
+                                disabled={statusPopup.type === "loading"}
+                            >
+                                <option value="year">per year</option>
+                                <option value="month">per month</option>
+                                <option value="hour">per hour</option>
+                            </select>
+                            <label>Currency</label>
+                            <select 
+                                name="salary.currency"
+                                value={jobPostData.salary?.currency || "USD"}
+                                onChange={handleSalaryChange}
+                                disabled={statusPopup.type === "loading"}
+                            >
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="LBP">LBP (lbp)</option>
+                            </select>
+                        </div>
+
                         <button 
                             type="submit" 
                             className="submit-btn"
@@ -587,6 +725,15 @@ export default function Jobs(props){
                     </svg> 
                     {job.location}</p>
                 }
+                {job.salary && (job.salary.min || job.salary.max) && (
+                    <p className="svg-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FB69E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dollar-sign w-4 h-4" aria-hidden="true">
+                            <line x1="12" x2="12" y1="2" y2="22"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        {formatSalary(job.salary)}
+                    </p>
+                )}
                 {job.jobType && <p className="svg-content">
                     <svg xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -608,6 +755,15 @@ export default function Jobs(props){
             </div>
         )
     }
+
+    const activeFilterCount = () => {
+        let count = 0
+        if (filter.jobType !== "all") count++
+        if (filter.location !== "all") count++
+        if (filter.salaryMin) count++
+        if (filter.salaryMax) count++
+        return count
+    }
     
     return(
         <>
@@ -618,10 +774,10 @@ export default function Jobs(props){
         
         <Outlet context={{ 
                     resumeText: props.resumeText, 
-                    allJobs: allJobs, 
+                    allJobs: filteredJobs, 
                     db: db, 
                     user: user, 
-                    jobEmbeddings: allJobs.map(job => job.jobEmbedding) 
+                    jobEmbeddings: filteredJobs.map(job => job.jobEmbedding) 
          }}/>
 
         {!isRecommended && <div className="bodyContent">
@@ -697,33 +853,88 @@ export default function Jobs(props){
                 ) : (
                     <>
                         {isFiltering && (
-                            <div className="filterContainer">
-                                <button onClick={()=>setFiltering(false)}>Back</button>
+                        <div className="filterContainer">
+                            <div className="filter-header">
+                                <button onClick={()=>setFiltering(false)} className="back-btn">                                    
+                                    Back
+                                </button>
                                 <h4>Filter Jobs</h4>
-                                <p>Narrow down your job search with filters</p>
+                                <p>Narrow down your job search</p>
+                            </div>
+                            
+                            <div className="filter-section">
                                 <h4>Job Type</h4>
-                                <select value={filter.jobType} onChange={(e) => setFilter(prev => ({
-                                    ...prev,
-                                    jobType: e.target.value
-                                }))}>
-                                    <option value="all" selected>All</option>
-                                    <option value="full-time">Full-time</option>
-                                    <option value="part-time">Part-time</option>
-                                    <option value="internship">Internship</option>
-                                    <option value="contract">Contract</option>
-                                </select>
+                                <div className="filter-options">
+                                    {['all', 'full time', 'part time', 'contract', 'internship', 'temporary', 'volunteer'].map(type => (
+                                        <label key={type} className="filter-option">
+                                            <input
+                                                type="radio"
+                                                name="jobType"
+                                                value={type}
+                                                checked={filter.jobType === type}
+                                                onChange={(e) => setFilter(prev => ({...prev, jobType: e.target.value}))}
+                                            />
+                                            <span>{type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <div className="filter-section">
                                 <h4>Location</h4>
-                                <select value={filter.location} onChange={(e) => setFilter(prev => ({
-                                    ...prev,
-                                    location: e.target.value
-                                }))}>
-                                    <option value="all" selected>All</option>
-                                    <option value="on-site">On-site</option>
-                                    <option value="remote">Remote</option>
-                                    <option value="hybrid">Hybrid</option>
-                                </select>
+                                <div className="filter-options">
+                                    {['all', 'remote', 'on-site'].map(location => (
+                                        <label key={location} className="filter-option">
+                                            <input
+                                                type="radio"
+                                                name="location"
+                                                value={location}
+                                                checked={filter.location === location}
+                                                onChange={(e) => setFilter(prev => ({...prev, location: e.target.value}))}
+                                            />
+                                            <span>{location === 'all' ? 'All Locations' : 
+                                                location === 'on-site' ? 'On-Site' : 
+                                                location.charAt(0).toUpperCase() + location.slice(1)}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <div className="filter-section">
+                                <h4>Salary Range ($)</h4>
+                                <div className="salary-range-inputs">
+                                    <div className="salary-input">
+                                        <label>Minimum</label>
+                                        <input
+                                            type="number"
+                                            placeholder="0"
+                                            value={filter.salaryMin}
+                                            onChange={(e) => setFilter(prev => ({...prev, salaryMin: e.target.value}))}
+                                        />
+                                    </div>
+                                    <div className="salary-input">
+                                        <label>Maximum</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Any"
+                                            value={filter.salaryMax}
+                                            onChange={(e) => setFilter(prev => ({...prev, salaryMax: e.target.value}))}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <div className="filter-actions">
+                                <button 
+                                    onClick={handleClearFilters}
+                                    className="clear-btn"
+                                >
+                                    Clear All
+                                </button>
                                 <button 
                                     onClick={handleApplyFilters}
+                                    className="apply-btn"
                                     disabled={statusPopup.type === "loading"}
                                 >
                                     {statusPopup.type === "loading" ? (
@@ -731,12 +942,13 @@ export default function Jobs(props){
                                             <div className="spinner"></div>
                                             Applying...
                                         </span>
-                                    ) : "Apply"}
+                                    ) : `Apply Filters (${activeFilterCount()})`}
                                 </button>
                             </div>
-                        )}
+                        </div>
+                    )}
                         <div className="jobContainer">
-                            {!isRecommended && allJobs.map((Job)=>(
+                            {!isRecommended && filteredJobs.map((Job)=>(
                                 <article key={Job.id}>
                                     {renderJobContent(Job)}
                                 </article>
@@ -879,6 +1091,57 @@ export default function Jobs(props){
                                 />
                             )}
                         </div>
+
+                        <label>Salary</label>
+                        <div className="salary-input-group">
+                            <div className="salary-row">
+                                <div className="salary-field">
+                                    <input
+                                        type="number"
+                                        name="salary.min"
+                                        value={jobPostData.salary?.min || ""}
+                                        onChange={handleSalaryChange}
+                                        placeholder="Min"
+                                        min="0"
+                                        disabled={statusPopup.type === "loading"}
+                                    />
+                                </div>
+                                <span className="salary-separator">to</span>
+                                <div className="salary-field">
+                                    <input
+                                        type="number"
+                                        name="salary.max"
+                                        value={jobPostData.salary?.max || ""}
+                                        onChange={handleSalaryChange}
+                                        placeholder="Max"
+                                        min="0"
+                                        disabled={statusPopup.type === "loading"}
+                                    />
+                                </div>
+                            </div>
+                            <label>Period</label>
+                            <select 
+                                name="salary.period"
+                                value={jobPostData.salary?.period || "year"}
+                                onChange={handleSalaryChange}
+                                disabled={statusPopup.type === "loading"}
+                            >
+                                <option value="year">per year</option>
+                                <option value="month">per month</option>
+                                <option value="hour">per hour</option>
+                            </select>
+                            <label>Currency</label>
+                            <select 
+                                name="salary.currency"
+                                value={jobPostData.salary?.currency || "USD"}
+                                onChange={handleSalaryChange}
+                                disabled={statusPopup.type === "loading"}
+                            >
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="LBP">LBP (lbp)</option>
+                            </select>
+                        </div>
                         <button 
                             type="submit" 
                             className="submit-btn"
@@ -962,4 +1225,3 @@ export default function Jobs(props){
         </>
     )
 }
-
