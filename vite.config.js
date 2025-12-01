@@ -1,8 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  base: './',
   plugins: [react()],
+  base: '/',  // This is important for Vercel
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined, // Optional: helps with chunking
+      }
+    }
+  }
 })
