@@ -96,11 +96,11 @@ export default function BrowseProfiles(){
                         <circle cx="12" cy="10" r="2.5"></circle>
                     </svg>{Profile.location || "No location specified"}</p>
                     <p>{Profile.bio || "No bio available"}</p>
-                    {Profile.skills?.length > 0 ? <ul className="skills-list-browse">
+                    {Profile.role === "jobseeker" ? ( Profile.skills?.length > 0 ? <ul className="skills-list-browse">
                         {Profile.skills?.map((skill,i) => (
                             <li key={i}>{skill}</li>                                
                         ))}
-                    </ul> : <p>No skills added</p>}             
+                    </ul> : <p>No skills added</p>) : null}              
                     <button 
                         className="view-profile" 
                         onClick={()=>handleViewProfile(Profile)}
@@ -326,4 +326,5 @@ export default function BrowseProfiles(){
             </>)}
         </>
     )
+
 }
