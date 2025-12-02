@@ -93,6 +93,11 @@
     stroke-width: 2;
   }
 
+.matchResumeCard button{
+    width: 95% !important;
+    margin: auto!important;
+  }
+
 
   /* --- Blog / Job Cards --- */
 
