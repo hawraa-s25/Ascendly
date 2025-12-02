@@ -14,7 +14,12 @@ export default function InApp(props){
 
     const [resumeText, setResumeText] = React.useState("")
     const [allProfiles, setAllProfiles] = React.useState([])
+    const [menuOpen, setMenuOpen] = React.useState(false)
     const navigate = useNavigate()
+
+    const closeMobileMenu = () => {
+        setMenuOpen(false)
+    }
 
     React.useEffect(() => {
         async function loadResumeText() {
@@ -66,87 +71,156 @@ export default function InApp(props){
     return (
         <>
         <nav className="navBar">
-            <img src={logo}/>
-            <div className="navItem">
-                <NavLink to="/app/blogs" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Blogs</NavLink>
-                <NavLink to="/app/jobs" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Jobs</NavLink>
+            <img src={logo} alt="Ascendly Logo"/>
+            
+            {window.innerWidth <= 767 && <button 
+                className="mobile-menu-toggle" 
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+            >
+                {menuOpen ? '✕' : '☰'}
+            </button>}
+            
+            <div className={`navItem ${menuOpen ? 'active' : ''}`}>
+                <NavLink 
+                    to="/app/blogs" 
+                    className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
+                    onClick={closeMobileMenu}
+                >
+                    Blogs
+                </NavLink>
+                <NavLink 
+                    to="/app/jobs" 
+                    className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
+                    onClick={closeMobileMenu}
+                >
+                    Jobs
+                </NavLink>
                 {props.user ? (
                     <>
-                        <NavLink to="/app/profile" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Profile</NavLink>
-                        <NavLink to="/app/chats" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Chats</NavLink>
+                        <NavLink 
+                            to="/app/profile" 
+                            className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
+                            onClick={closeMobileMenu}
+                        >
+                            Profile
+                        </NavLink>
+                        <NavLink 
+                            to="/app/chats" 
+                            className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
+                            onClick={closeMobileMenu}
+                        >
+                            Chats
+                        </NavLink>
                     </>
                 ) : (
                     <>
-                        <span className="nav-link" onClick={props.triggerAuthPopup}>Profile</span>
-                        <span className="nav-link" onClick={props.triggerAuthPopup}>Chats</span>
+                        <span 
+                            className="nav-link" 
+                            onClick={() => {
+                                props.triggerAuthPopup()
+                                closeMobileMenu()
+                            }}
+                        >
+                            Profile
+                        </span>
+                        <span 
+                            className="nav-link" 
+                            onClick={() => {
+                                props.triggerAuthPopup()
+                                closeMobileMenu()
+                            }}
+                        >
+                            Chats
+                        </span>
                     </>
                 )}
             </div>
-            {auth.currentUser ? <button className="sign-out-btn" onClick={()=>{
-                    props.signOutOnClick()
-                    navigate("/app/blogs")
-                }}>
-                Sign Out
-            </button> : 
-            <button className="sign-out-btn" onClick={()=>navigate("/signin")}>Sign In</button>}
+            
+            {/* Sign in/out button */}
+            {auth.currentUser ? (
+                <button 
+                    className="sign-out-btn" 
+                    onClick={() => {
+                        props.signOutOnClick()
+                        navigate("/app/blogs")
+                        closeMobileMenu()
+                    }}
+                >
+                    Sign Out
+                </button>
+            ) : (
+                <button 
+                    className="sign-out-btn" 
+                    onClick={() => {
+                        navigate("/signin")
+                        closeMobileMenu()
+                    }}
+                >
+                    Sign In
+                </button>
+            )}
         </nav>
-
-        {props.status.loading && props.status.action === "load-resume" && (
-            <p>Loading your data...</p>
-        )}
-
-        {props.status.error && props.status.action === "load-resume" && (
-            <p>{props.status.error}</p>
+        
+        {menuOpen && (
+            <div 
+                className="mobile-menu-overlay"
+                onClick={closeMobileMenu}
+            />
         )}
 
         <Routes>
-            <Route path="blogs" element={<Blogs 
-                                            db={db}
-                                            auth={auth} 
-                                            storage={storage} 
-                                            userInfo={props.userInfo}
-                                            allProfiles={allProfiles}
-                                            triggerAuthPopup={props.triggerAuthPopup}
-                                            status={props.status}
-                                            setStatus={props.setStatus}
-                                        />}
-            />
+            <Route path="blogs" element={
+                <Blogs 
+                    db={db}
+                    auth={auth} 
+                    storage={storage} 
+                    userInfo={props.userInfo}
+                    allProfiles={allProfiles}
+                    triggerAuthPopup={props.triggerAuthPopup}
+                    status={props.status}
+                    setStatus={props.setStatus}
+                />
+            }/>
             <Route path="jobs/*" element={
-                                        <Jobs 
-                                            db={db} 
-                                            auth={auth} 
-                                            storage={storage} 
-                                            userInfo={props.userInfo}
-                                            resumeText={resumeText}
-                                            allProfiles={allProfiles}
-                                            triggerAuthPopup={props.triggerAuthPopup}
-                                            status={props.status}
-                                            setStatus={props.setStatus}
-                                        />
-                                        }>
+                <Jobs 
+                    db={db} 
+                    auth={auth} 
+                    storage={storage} 
+                    userInfo={props.userInfo}
+                    resumeText={resumeText}
+                    allProfiles={allProfiles}
+                    triggerAuthPopup={props.triggerAuthPopup}
+                    status={props.status}
+                    setStatus={props.setStatus}
+                />
+            }>
                 <Route path="recommended" element={<RecommendedJobs/>} />
             </Route>
-            <Route path="profile/*" element={<Profile 
-                                            auth={auth}
-                                            storage={storage}
-                                            setResumeText={setResumeText}
-                                            setAllProfiles={setAllProfiles}
-                                            allProfiles={allProfiles}
-                                            userInfo={props.userInfo}
-                                            status={props.status}
-                                            setStatus={props.setStatus}
-                                        />}>
+            <Route path="profile/*" element={
+                <Profile 
+                    auth={auth}
+                    storage={storage}
+                    setResumeText={setResumeText}
+                    setAllProfiles={setAllProfiles}
+                    allProfiles={allProfiles}
+                    userInfo={props.userInfo}
+                    status={props.status}
+                    setStatus={props.setStatus}
+                />
+            }>
                 <Route path="browse" element={<BrowseProfiles/>} />
             </Route>
-            <Route path="chats" element={<Chats 
-                                            auth={auth}
-                                            storage={storage}    
-                                            allProfiles={allProfiles}
-                                            userInfo={props.userInfo}
-                                            status={props.status}
-                                            setStatus={props.setStatus}
-                                        />}
-            />
+            <Route path="chats" element={
+                <Chats 
+                    auth={auth}
+                    storage={storage}    
+                    allProfiles={allProfiles}
+                    userInfo={props.userInfo}
+                    status={props.status}
+                    setStatus={props.setStatus}
+                />
+            }/>
         </Routes>
 
         {props.status.loading && props.status.action==="signout" && <p>Signing out...</p>}
