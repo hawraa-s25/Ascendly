@@ -12,7 +12,6 @@
     overflow-x: hidden;
   }
   .pageContainer,
-  .bodyContent,
   .mainBlogContainer,
   .sidebar,
   .profile-sidebar,
@@ -33,6 +32,7 @@
     align-items: flex-start;
     padding: 1rem;
     gap: 1rem;
+    margin-left: -4rem;
   }
 
 
@@ -75,7 +75,7 @@
   }
 
   .create-btn {
-    width: 100%;
+    width: 90%;
     margin: 0.5rem auto !important;
     padding: 0.875rem 1rem;
     font-size: 1rem;
@@ -102,6 +102,14 @@
     max-width: 100% !important;
     margin: 0 0 1rem 0 !important;
     padding: 1rem !important;
+  }
+
+     .blog-card p{
+    font-size: 15px;
+  }
+
+  .blog-card h2{
+    font-size: 20px;
   }
 
 
@@ -271,13 +279,6 @@
   .error-message {
     max-width: 250px;
     font-size: 0.95rem;
-  }
-  
-  /* Route-specific adjustments */
-  .create-btn {
-    width: 100%;
-    margin: 1rem 0 !important;
-    justify-content: center;
   }
   
   /* Improve touch targets for all interactive elements */
