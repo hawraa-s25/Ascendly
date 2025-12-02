@@ -1,0 +1,295 @@
+
+@media screen and (max-width: 767px) {
+
+    * {
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  body, html {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  .pageContainer,
+  .bodyContent,
+  .mainBlogContainer,
+  .sidebar,
+  .profile-sidebar,
+  .matchResumeCard,
+  .blogContainer {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    display: block !important;
+  }
+
+  .pageContainer {
+    flex-direction: column !important;
+  }
+
+  .bodyContent {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+
+  /* --- Search Bar --- */
+
+  .searchContainer {
+    width: 100%;
+    padding: 0 1rem;
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 48px;
+  }
+
+  .searchContainer input {
+    flex: 1;
+    width: 100%;
+    font-size: 16px; /* Prevents iOS zoom */
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    height: 100%;
+    margin: 0;
+    border-radius: 8px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 2rem;
+    width: 20px;
+    height: 20px;
+  }
+
+  .searchBlogBtn {
+    width: auto;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    min-height: 48px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .create-btn {
+    width: 100%;
+    margin: 0.5rem auto !important;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    min-height: 48px;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .create-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+  }
+
+
+  /* --- Blog / Job Cards --- */
+
+  .blog-card,
+  .job-card,
+  .profile-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 1rem 0 !important;
+    padding: 1rem !important;
+  }
+
+
+  /* --- Sidebar Fix (profile sidebar not visible) --- */
+
+  .sidebar {
+    order: 2;
+    margin-top: 1.5rem !important;
+  }
+
+  .profile-sidebar {
+    width: 100% !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+
+  /* --- Images Fix (prevent overflow) --- */
+
+  .images-wrapper,
+  .blog-images a {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .image-item {
+    width: 48% !important;
+  }
+
+
+  /* --- Buttons full width --- */
+
+  .action-buttons button,
+  button[type="submit"] {
+    width: 100% !important;
+  }
+  .navBar {
+    padding: 0.5rem 1rem;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    position: relative;
+  }
+  
+  .navBar img {
+    width: 120px;
+    height: 45px;
+    margin: 0;
+    order: 1;
+  }
+  
+  .sign-out-btn {
+    order: 2;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    min-height: 36px;
+    margin: 0;
+    z-index: 1000;
+  }
+  
+  /* Mobile hamburger menu */
+  .mobile-menu-toggle {
+    display: none; /* Hidden by default, you'll need to add this element */
+  }
+  
+  /* Navigation items - hidden by default on mobile */
+  .navItem {
+    display: none;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    background-color: white;
+    flex-direction: column;
+    gap: 0;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 998;
+    border-radius: 0 0 12px 12px;
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+  }
+  
+  .navItem.active {
+    display: flex;
+  }
+  
+  .nav-link {
+    padding: 1rem;
+    margin: 0.25rem 0;
+    font-size: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .nav-link:hover,
+  .nav-link.active:hover {
+    transform: none;
+  }
+  
+  /* Mobile hamburger icon (add this to your JSX) */
+  /* 
+  <button className="mobile-menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
+    ☰
+  </button>
+  */
+  
+  .mobile-menu-toggle {
+    display: flex;
+    order: 3;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: #2E2B26;
+    z-index: 1000;
+    min-height: 44px;
+    min-width: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Adjust main content for mobile */
+  .pageContainer,
+  .bodyContent,
+  .searchContainer,
+  .mainBlogContainer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Auth popup adjustments */
+  .auth-popup-card {
+    width: 90%;
+    max-width: 320px;
+    height: auto;
+    min-height: 50vh;
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .auth-popup-card button {
+    width: 100%;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+  }
+  
+  .auth-popup-card svg {
+    padding: 1rem;
+    width: 60px;
+    height: 60px;
+  }
+  
+  /* Loading spinner adjustments */
+  .app-spinner-large {
+    width: 50px;
+    height: 50px;
+    border-width: 3px;
+  }
+  
+  .full-page-loading p {
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .error-message {
+    max-width: 250px;
+    font-size: 0.95rem;
+  }
+  
+  /* Route-specific adjustments */
+  .create-btn {
+    width: 100%;
+    margin: 1rem 0 !important;
+    justify-content: center;
+  }
+  
+  /* Improve touch targets for all interactive elements */
+  button,
+  .nav-link,
+  input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent text zoom on orientation change */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
