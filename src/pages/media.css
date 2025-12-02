@@ -2,8 +2,9 @@
 @media screen and (max-width: 500px) {
 
      * {
-     box-sizing: border-box;
-   }
+         max-width: 100% !important;
+         box-sizing: border-box;
+       }
 
 
   body, html {
@@ -109,13 +110,11 @@
   .sidebar {
     order: 2;
     margin-top: 1.5rem !important;
-     position: fixed !important;
   }
 
   .profile-sidebar {
     width: 100% !important;
     margin-bottom: 1.5rem !important;
-     position: fixed !important;
   }
 
 
