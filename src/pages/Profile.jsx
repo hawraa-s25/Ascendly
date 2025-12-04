@@ -101,11 +101,17 @@ export default function Profile(props){
                 }
                 showStatus("Profile loaded successfully!", "success")
             } else {
+
+                const displayName = user.displayName || ""
+                const nameParts = displayName.split(" ")
+                const googleFirstName = nameParts[0] || ""
+                const googleLastName = nameParts.slice(1).join(" ") || ""
+
                 const initialProfileData = {
                     resumeText: "",
                     userId: user.uid,
-                    firstName: userInfo.firstName,
-                    lastName: userInfo.lastName,
+                    firstName: userInfo.firstName || googleFirstName || "",
+                    lastName: userInfo.lastName || googleLastName || "",
                     email: user.email,
                     role: userInfo.role || "jobseeker",
                     bio: "",
