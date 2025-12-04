@@ -175,12 +175,11 @@
   }
 
   .sign-out-btn {
-    order: 2;
     padding: 0.4rem 0.8rem;
     font-size: 0.85rem;
-    min-height: 36px;
     margin: 0;
     z-index: 1000;
+    width: 50% !important;
   }
 
   .mobile-menu-toggle {
