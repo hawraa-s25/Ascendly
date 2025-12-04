@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import logo from "../ascendly-logo.png"
 import StatusPopup from "./StatusPopup"
+import googleLogo from "/src/assets/images/GoogleLogo.png"
 
 export default function SignUp(props) {
 
@@ -128,7 +129,7 @@ export default function SignUp(props) {
                     type="button"
                     disabled={statusPopup.type === "loading"}
                 >
-                    <img src="src/assets/images/GoogleLogo.png" alt="Google logo" />
+                    <img src={googleLogo} alt="Google logo" />
                     {statusPopup.type === "loading" && statusPopup.message.includes("Google") ? (
                         <span className="button-loading">
                             <div className="spinner"></div>
