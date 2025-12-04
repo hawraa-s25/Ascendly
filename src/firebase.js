@@ -3,6 +3,8 @@ import { getFirestore } from "firebase/firestore"
 import { getAuth, GoogleAuthProvider } from "firebase/auth"
 import { getStorage } from "firebase/storage"
 import { getDatabase } from "firebase/database"
+import { getPerformance } from "firebase/performance"
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyA-cmt-6nEhkFp90Pjq5N7TzxLWHjSiY7s",
@@ -13,25 +15,20 @@ const firebaseConfig = {
   appId: "1:1024622385350:web:03ccbbb12f416ac10b5fc7"
 }
 
-// Initialize Firebase (keep this for auth/storage)
 const app = initializeApp(firebaseConfig)
 
-// Services (keep these for Firebase Auth/Storage)
 const db = getFirestore(app)
 const auth = getAuth(app)
 const provider = new GoogleAuthProvider()
 const storage = getStorage(app)
 const realTimeDB = getDatabase()
+const perf = getPerformance(app)
 
-// REMOVED: All Functions-related code
-// REMOVED: getFunctions, connectFunctionsEmulator, httpsCallable
-
-// NEW: Vercel API functions
 export const summarizedBlog = async (content) => {
   const response = await fetch('/api/summarizedBlog', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }) // This is correct
+    body: JSON.stringify({ content })
   })
   return response.json()
 }
@@ -40,9 +37,9 @@ export const createEmbeddings = async (text) => {
   const response = await fetch('/api/createEmbeddings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }) // This sends { text: "your text" }
+    body: JSON.stringify({ text })
   })
-  return response.json() // This returns { embedding: [...] }
+  return response.json() 
 }
 
 export const extractData = async (fileData) => {
@@ -55,7 +52,6 @@ export const extractData = async (fileData) => {
 }
 
 
-// Exports (removed functions)
 export { app, db, auth, provider, storage, realTimeDB }
 
 
@@ -128,4 +124,3 @@ firebase emulators:start --only functions
 }
 
  */
-
