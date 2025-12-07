@@ -45,12 +45,14 @@ export default function Signin(props){
 
     async function handleGoogleSignIn() {
         showStatus("Signing in with Google...", "loading")
-        try {
-            await props.googleOnClick()
+        await props.googleOnClick()
+        .then(() => {
             showStatus("Signed in with Google successfully!", "success")
-        } catch (error) {
+        })
+        .catch((error) => {
+            console.error("Google sign-in error:", error)
             showStatus("Failed to sign in with Google", "error")
-        }
+        })
     }
 
     async function handleEmailSignIn() {
