@@ -44,12 +44,14 @@ export default function SignUp(props) {
 
     async function handleGoogleSignUp() {
         showStatus("Signing up with Google...", "loading")
-        try {
-            await props.googleOnClick()
+        await props.googleOnClick()
+        .then(() => {
             showStatus("Signed up with Google successfully!", "success")
-        } catch (error) {
+        })
+        .catch((error) => {
+            console.error("Google sign-up error:", error)
             showStatus("Failed to sign up with Google", "error")
-        }
+        })
     }
 
     async function handleCreateAccount() {
