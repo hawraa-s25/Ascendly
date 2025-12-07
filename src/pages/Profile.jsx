@@ -32,6 +32,8 @@ export default function Profile(props){
 
     const [userData, setUserData] = React.useState({
         resumeText: "",
+        resumeName: "",
+        resumeURL: "",
         userId: user.uid,
         firstName: userInfo.firstName,
         lastName: userInfo.lastName,
@@ -109,6 +111,8 @@ export default function Profile(props){
 
                 const initialProfileData = {
                     resumeText: "",
+                    resumeName: "",
+                    resumeURL: "",
                     userId: user.uid,
                     firstName: userInfo.firstName || googleFirstName || "",
                     lastName: userInfo.lastName || googleLastName || "",
@@ -221,7 +225,8 @@ export default function Profile(props){
             await updateDoc(doc(db, "profile", user.uid), {
                 ...userData, 
                 resumeText: result.extractedText,
-                resumeURL: resumeURL
+                resumeURL: resumeURL,
+                resumeName: file.name
             })
 
             setUserData(prev => ({ 
@@ -234,7 +239,7 @@ export default function Profile(props){
             if (props.setResumeText) {
                 props.setResumeText(result.extractedText)
             }
-e
+
             showStatus(
                 `Successfully processed ${file.name}! ` +
                 `Extracted ${result.characterCount} characters.`,
@@ -847,8 +852,13 @@ e
                             <line x1="6" y1="12" x2="14" y2="12"/>
                             <line x1="6" y1="15" x2="10" y2="15"/>
                         </svg>
-                        <a href={userData.resumeURL} target="_blank" rel="noopener noreferrer" className="view-resume-btn">
-                                {userData.resumeName}
+                        <a 
+                            href={userData.resumeURL} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="view-resume-btn"
+                        >
+                            {userData.resumeName ? userData.resumeName: "View Resume"} 
                         </a>
                         <button 
                             onClick={handleDeleteResume}
