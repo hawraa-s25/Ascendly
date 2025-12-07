@@ -75,7 +75,7 @@ export default function BrowseProfiles(){
             </div>
             <div className="profiles-list">
             {allProfiles
-                .filter(profile => profile.userId !== user.uid)
+                .filter(profile => profile.userId !== user.uid && profile.role !== "admin")
                 .map((Profile, i) =>(
                 <div key={i}>
                     <img src={Profile.profileURL || defaultImage} alt={`${Profile.firstName}'s profile`}/>
@@ -100,7 +100,7 @@ export default function BrowseProfiles(){
                         {Profile.skills?.map((skill,i) => (
                             <li key={i}>{skill}</li>                                
                         ))}
-                    </ul> : <p>No skills added</p>) : null}              
+                    </ul> : <p>No skills added</p>) : null}             
                     <button 
                         className="view-profile" 
                         onClick={()=>handleViewProfile(Profile)}
@@ -182,7 +182,7 @@ export default function BrowseProfiles(){
                             <line x1="6" y1="15" x2="10" y2="15"/>
                         </svg>
                         <a href={selectedProfile.resumeURL} target="_blank" rel="noopener noreferrer" className="view-resume-btn">
-                                {selectedProfile.resumeName}
+                                {selectedProfile.resumeName ? selectedProfile.resumeName: "View Resume"} 
                         </a>
                         
                     </div>: <p id="resume-unavailable">No resume available</p>}                
@@ -326,5 +326,4 @@ export default function BrowseProfiles(){
             </>)}
         </>
     )
-
 }
