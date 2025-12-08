@@ -1,4 +1,5 @@
 import React from "react"
+import "./media.css"
 import { 
     doc, 
     collection, 
@@ -45,8 +46,8 @@ export default function Blogs(props){
         imageURLs: [],
         createdBy: {
             authorId: user?.uid || "Anonymous",
-            firstName: props.userInfo?.firstName || "",
-            lastName: props.userInfo.lastName || "",
+            firstName: profile?.firstName || "",
+            lastName: profile.lastName || "",
             profileURL: profile?.profileURL || ""
         },
         summary: "",
@@ -159,8 +160,8 @@ export default function Blogs(props){
                 ...blogPostData,
                 createdBy: {
                     authorId: user.uid,
-                    firstName: props.userInfo?.firstName || "",
-                    lastName: props.userInfo?.lastName || "",
+                    firstName: profile?.firstName || "",
+                    lastName: profile?.lastName || "",
                     profileURL: profile?.profileURL || ""
                 }
             }
@@ -313,10 +314,7 @@ export default function Blogs(props){
             if(!blog) throw new Error("Blog not found")
             
             if(!blog.summary){
-                // Remove the { content: blogContent } wrapper - just pass the content directly
                 const result = await summarizedBlog(blogContent)
-                
-                // Check if the response has the summary
                 if (!result || !result.summary) {
                     throw new Error("No summary returned from API")
                 }
@@ -341,8 +339,6 @@ export default function Blogs(props){
         
         showStatus("Searching blogs...", "loading")
         try{
-            /*const queryEmbedding = await createEmbeddings({ text: searchText })
-            calculateSimilarity(allBlogs, "blogEmbedding", queryEmbedding.data.embedding, setAllBlogs)*/
             const queryEmbedding = await createEmbeddings(searchText)
             if (queryEmbedding && queryEmbedding.embedding) {
                 calculateSimilarity(allBlogs, "blogEmbedding", queryEmbedding.embedding, setAllBlogs)
