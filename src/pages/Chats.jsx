@@ -4,6 +4,7 @@ import { ref, push, onValue, off, update } from "firebase/database"
 import "./Chats.css"
 import defaultImage from "./defaultProfileImage.jpeg"
 import StatusPopup from "./StatusPopup"
+import { textTruncation } from "../commonFunctions"
 
 export default function Chats(props){
     const auth = props.auth
@@ -198,21 +199,6 @@ export default function Chats(props){
         return () => off(chatsRef)
     }
 
-    function textTruncation(text){
-        if (!text) return ""
-
-        if (text.length <= 50){
-            return text
-        }else{
-            let shortText = text.substring(0,50)
-            const lastSpace = shortText.lastIndexOf(" ")
-            if (lastSpace > 50 * 0.7){
-                shortText = shortText.substring(0,lastSpace)
-            }
-            return shortText + "..."
-        }
-    }
-
     return(
         <>
             <StatusPopup statusPopup={statusPopup} onClose={hideStatus} />
@@ -303,7 +289,7 @@ export default function Chats(props){
                                                 <img src={profile.profileURL || defaultImage} alt={`${otherUser.firstName}'s profile`}/>
                                                 <div className="chat-content">
                                                     <h3 className="chat-user">{otherUser.firstName} {otherUser.lastName}</h3>
-                                                    <span> {chat.lastMessage && textTruncation(chat.lastMessage.text)} </span>
+                                                    <span> {chat.lastMessage && textTruncation(chat.lastMessage.text, 50)} </span>
                                                     <span className="chat-timestamp">
                                                         {chat.lastMessage && chat.lastMessage.timestamp}
                                                     </span>
