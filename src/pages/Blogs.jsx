@@ -47,7 +47,7 @@ export default function Blogs(props){
         createdBy: {
             authorId: user?.uid || "Anonymous",
             firstName: profile?.firstName || "",
-            lastName: profile.lastName || "",
+            lastName: profile?.lastName || "",
             profileURL: profile?.profileURL || ""
         },
         summary: "",
@@ -727,3 +727,4 @@ export default function Blogs(props){
     </>
     )
 }
+
