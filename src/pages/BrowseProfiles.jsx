@@ -2,6 +2,7 @@ import { useOutletContext } from "react-router-dom"
 import defaultImage from "./defaultProfileImage.jpeg"
 import React from "react"
 import StatusPopup from "./StatusPopup"
+import { textTruncation } from "../commonFunctions"
 
 export default function BrowseProfiles(){
     const { allProfiles, user, startAdminEdit } = useOutletContext()
@@ -95,7 +96,7 @@ export default function BrowseProfiles(){
                         <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 1118 0z"></path>
                         <circle cx="12" cy="10" r="2.5"></circle>
                     </svg>{Profile.location || "No location specified"}</p>
-                    <p>{Profile.bio || "No bio available"}</p>
+                    <p>{ textTruncation(Profile.bio, 120) || "No bio available"}</p>
                     {Profile.role === "jobseeker" ? ( Profile.skills?.length > 0 ? <ul className="skills-list-browse">
                         {Profile.skills?.map((skill,i) => (
                             <li key={i}>{skill}</li>                                
