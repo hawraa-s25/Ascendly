@@ -136,5 +136,19 @@ export async function uploadImages(file){
         console.error("Error: ", error.message)
         return null
     }
-
 }
+
+export function textTruncation(text, maxLength){
+        if (!text) return ""
+
+        if (text.length <= maxLength){
+            return text
+        }else{
+            let shortText = text.substring(0, maxLength)
+            const lastSpace = shortText.lastIndexOf(" ")
+            if (lastSpace > maxLength * 0.7){
+                shortText = shortText.substring(0,lastSpace)
+            }
+            return shortText + "..."
+        }
+    }
