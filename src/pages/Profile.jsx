@@ -427,7 +427,7 @@ export default function Profile(props){
                             type="text" 
                             name="firstName"
                             placeholder="First Name"
-                            value={currentEditData.firstName || "Unknown"}
+                            value={currentEditData.firstName || ""}
                             onChange={(e)=> handleInputChange(e, setCurrentEdit)}
                             disabled={statusPopup.type === "loading"}
                         />
@@ -1020,3 +1020,4 @@ export default function Profile(props){
         
     )
 }
+
