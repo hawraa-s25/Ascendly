@@ -39,8 +39,8 @@ export default function Jobs(props){
         requirements: [],
         createdBy: {
             authorId: user?.uid || "Anonymous",
-            firstName: props.userInfo?.firstName || "",
-            lastName: props.userInfo?.lastName || "",
+            firstName: profile?.firstName || "",
+            lastName: profile?.lastName || "",
             profileURL: profile?.profileURL || ""
         },
         applicationURL: "",
@@ -271,8 +271,8 @@ export default function Jobs(props){
                 ...jobPostData,
                  createdBy: {
                     authorId: user.uid,
-                    firstName: props.userInfo?.firstName || "",
-                    lastName: props.userInfo?.lastName || "",
+                    firstName: profile?.firstName || "",
+                    lastName: profile?.lastName || "",
                     profileURL: profile.profileURL || ""
                 },
                 isActive: true
