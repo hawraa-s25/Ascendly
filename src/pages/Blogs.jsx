@@ -352,6 +352,12 @@ export default function Blogs(props){
         }
     }
 
+    function navigateToProfile(blog){
+        const blogProfile = props.allProfiles?.find(profile => profile.userId === blog.createdBy.authorId)
+        props.setSelectedProfile(blogProfile)
+        navigate("/app/profile/browse")
+    }
+
     function renderEditModal() {
         if (!editing.isEditing) return null
         
@@ -434,8 +440,8 @@ export default function Blogs(props){
         
         return (
             <div className={`blog-card ${isDeletingThis ? 'deleting' : ''}`}>
-                <div className="profile-details">
-                    <img src={blog.createdBy.profileURL || defaultImage} alt="Author profile" />
+                <div className="profile-details"  onClick={()=>navigateToProfile(blog)}>
+                    <img src={blog.createdBy.profileURL || defaultImage} alt="Author profile"/>
                     <p className="author">{blog.createdBy.firstName || 'Unknown'} {blog.createdBy.lastName || ''}</p>
                     {(user && (blog.createdBy.authorId === user.uid || profile?.role === "admin")) && 
                         <div className='action-buttons'>
@@ -727,5 +733,3 @@ export default function Blogs(props){
     </>
     )
 }
-
-
