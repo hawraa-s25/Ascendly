@@ -35,11 +35,12 @@ export default function ResetPassword(props){
                 showStatus("Sending reset instructions...", "loading")
             } else if (props.status.error) {
                 showStatus(props.status.error, "error")
-            } else if (props.status.success) {
+            } else if (props.status.success && !props.status.error) {
                 showStatus("Reset email sent successfully! Check your inbox.", "success")
             }
         }
     }, [props.status])
+
 
     async function handleResetPassword() {
         showStatus("Sending reset instructions...", "loading")
