@@ -155,6 +155,7 @@ p{
   display: flex;
   align-items: center;
   margin-bottom: 1rem;
+  cursor: pointer;
 }
 
 .profile-details img{
@@ -744,4 +745,5 @@ p{
 .salary-separator{
   margin-right: -1rem;
 }
+
 
