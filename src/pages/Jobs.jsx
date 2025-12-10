@@ -52,8 +52,6 @@ export default function Jobs(props){
             currency: "USD",
             period: "year" 
         },
-        tags: [],
-        isActive: false,
         jobEmbedding: []
     })
     const [isRemote, setRemote] = React.useState(true)
@@ -187,8 +185,6 @@ export default function Jobs(props){
                 location: jobPostData.location,
                 jobType: jobPostData.jobType,
                 salary: jobPostData.salary,
-                tags: [],
-                isActive: true
             }
             await editPost(collectionName, jobPostData, updatedDoc, setEditing, "jobID")
             setJobData(updatedDoc)
@@ -274,8 +270,7 @@ export default function Jobs(props){
                     firstName: profile?.firstName || "",
                     lastName: profile?.lastName || "",
                     profileURL: profile.profileURL || ""
-                },
-                isActive: true
+                }
             }
 
             const jobRef = await addItemToDatabase(collectionName, finalJobData)
@@ -670,9 +665,9 @@ export default function Jobs(props){
         
         return (
             <div className={`job-card ${isDeletingThis ? 'deleting' : ''}`}>
-                <div className="profile-details"  onClick={()=>navigateToProfile(job)}>
-                    <img src={job.createdBy.profileURL || defaultImage}/>
-                    <p className="job-author">{job.createdBy.firstName || 'Unknown'} {job.createdBy.lastName || ''}</p>
+                <div className="profile-details">
+                    <img src={job.createdBy.profileURL || defaultImage} onClick={()=>navigateToProfile(job)}/>
+                    <p className="job-author" onClick={()=>navigateToProfile(job)}>{job.createdBy.firstName || 'Unknown'} {job.createdBy.lastName || ''}</p>
                     {(user && (job.createdBy.authorId === user.uid || profile?.role === "admin")) &&
                         <div className="action-buttons">
                             <button 
