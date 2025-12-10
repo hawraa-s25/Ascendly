@@ -93,11 +93,13 @@ export default function Blogs(props){
     }
 
     React.useEffect(() => {
-        const loadBlogs = async () => {
+        const loadBlogs = () => {
             showStatus("Loading blogs...", "loading")
             try {
-                const unsubscribe = fetchItemData(collectionName, setAllBlogs)
-                showStatus("Blogs loaded successfully!", "success")
+                const unsubscribe = fetchItemData(collectionName, (blogs) => {
+                    setAllBlogs(blogs)
+                    showStatus("Blogs loaded successfully!", "success")
+                })
                 return () => unsubscribe()
             } catch (error) {
                 console.error(error)
@@ -733,3 +735,4 @@ export default function Blogs(props){
     </>
     )
 }
+
