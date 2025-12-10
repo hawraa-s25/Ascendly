@@ -450,6 +450,12 @@ export default function Jobs(props){
         return url.protocol === "http:" || url.protocol === "https:"
     }
 
+    function navigateToProfile(job){
+        const jobProfile = props.allProfiles?.find(profile => profile.userId === job.createdBy.authorId)
+        props.setSelectedProfile(jobProfile)
+        navigate("/app/profile/browse")
+    }
+
     /* Rendering Functions */
     function renderEditModal() {
         if (!editing.isEditing) return null
@@ -664,7 +670,7 @@ export default function Jobs(props){
         
         return (
             <div className={`job-card ${isDeletingThis ? 'deleting' : ''}`}>
-                <div className="profile-details">
+                <div className="profile-details"  onClick={()=>navigateToProfile(job)}>
                     <img src={job.createdBy.profileURL || defaultImage}/>
                     <p className="job-author">{job.createdBy.firstName || 'Unknown'} {job.createdBy.lastName || ''}</p>
                     {(user && (job.createdBy.authorId === user.uid || profile?.role === "admin")) &&
@@ -1225,4 +1231,3 @@ export default function Jobs(props){
         </>
     )
 }
-
