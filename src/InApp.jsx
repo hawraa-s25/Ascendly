@@ -15,6 +15,7 @@ export default function InApp(props){
     const [resumeText, setResumeText] = React.useState("")
     const [allProfiles, setAllProfiles] = React.useState([])
     const [menuOpen, setMenuOpen] = React.useState(false)
+    const [selectedProfile, setSelectedProfile] = React.useState(null)
     const navigate = useNavigate()
 
     const closeMobileMenu = () => {
@@ -81,7 +82,7 @@ export default function InApp(props){
                 {menuOpen ? '✕' : '☰'}
             </button>}
             
-            <div className={`navItem ${menuOpen ? 'active' : ''}`}>
+            <div >
                 <NavLink 
                     to="/app/blogs" 
                     className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
@@ -180,6 +181,7 @@ export default function InApp(props){
                     triggerAuthPopup={props.triggerAuthPopup}
                     status={props.status}
                     setStatus={props.setStatus}
+                    setSelectedProfile={setSelectedProfile}
                 />
             }/>
             <Route path="jobs/*" element={
@@ -193,6 +195,7 @@ export default function InApp(props){
                     triggerAuthPopup={props.triggerAuthPopup}
                     status={props.status}
                     setStatus={props.setStatus}
+                    setSelectedProfile={setSelectedProfile}
                 />
             }>
                 <Route path="recommended" element={<RecommendedJobs/>} />
@@ -209,7 +212,9 @@ export default function InApp(props){
                     setStatus={props.setStatus}
                 />
             }>
-                <Route path="browse" element={<BrowseProfiles/>} />
+                <Route path="browse" element={<BrowseProfiles
+                                                setSelectedProfile={setSelectedProfile}
+                                                selectedProfile={selectedProfile}/>} />
             </Route>
             <Route path="chats" element={
                 <Chats 
