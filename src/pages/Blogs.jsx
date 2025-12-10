@@ -440,9 +440,9 @@ export default function Blogs(props){
         
         return (
             <div className={`blog-card ${isDeletingThis ? 'deleting' : ''}`}>
-                <div className="profile-details"  onClick={()=>navigateToProfile(blog)}>
-                    <img src={blog.createdBy.profileURL || defaultImage} alt="Author profile"/>
-                    <p className="author">{blog.createdBy.firstName || 'Unknown'} {blog.createdBy.lastName || ''}</p>
+                <div className="profile-details">
+                    <img src={blog.createdBy.profileURL || defaultImage} alt="Author profile" onClick={()=>navigateToProfile(blog)}/>
+                    <p className="author" onClick={()=>navigateToProfile(blog)}>{blog.createdBy.firstName || 'Unknown'} {blog.createdBy.lastName || ''}</p>
                     {(user && (blog.createdBy.authorId === user.uid || profile?.role === "admin")) && 
                         <div className='action-buttons'>
                             <button 
