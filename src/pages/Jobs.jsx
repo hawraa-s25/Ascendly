@@ -106,8 +106,8 @@ export default function Jobs(props){
                 const unsubscribe = fetchItemData(collectionName, (jobs) => {
                     setAllJobs(jobs)
                     setFilteredJobs(jobs)
+                    showStatus("Jobs loaded successfully!", "success")
                 })
-                showStatus("Jobs loaded successfully!", "success")
                 return ()=>unsubscribe()
             } catch (error) {
                 console.error(error)
@@ -1226,3 +1226,4 @@ export default function Jobs(props){
         </>
     )
 }
+
