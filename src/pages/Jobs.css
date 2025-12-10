@@ -155,7 +155,6 @@ p{
   display: flex;
   align-items: center;
   margin-bottom: 1rem;
-  cursor: pointer;
 }
 
 .profile-details img{
@@ -163,12 +162,14 @@ p{
   height: 60px;
   border-radius: 50%;
   object-fit: cover;
+  cursor: pointer;
 }
 
 .profile-details p{
   margin-top: 0.7rem;
   margin-left: 1rem;
   font-size: 1rem;
+  cursor: pointer;
 }
 
 .action-buttons {
@@ -745,5 +746,4 @@ p{
 .salary-separator{
   margin-right: -1rem;
 }
-
 
