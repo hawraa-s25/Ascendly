@@ -1,6 +1,6 @@
 import React from "react"
 import { realTimeDB } from "../firebase"
-import { ref, push, onValue, off, update } from "firebase/database"
+import { ref, push, onValue, off, update, get } from "firebase/database"
 import "./Chats.css"
 import defaultImage from "./defaultProfileImage.jpeg"
 import StatusPopup from "./StatusPopup"
@@ -53,6 +53,54 @@ export default function Chats(props){
         }
     }, [statusPopup])
 
+    React.useEffect(() => {
+        if (user && props.allProfiles) {
+            const updateInChats = async () => {
+                try {
+                    const chatsSnapshot = await get(ref(realTimeDB, 'chats'))
+                    const chatsData = chatsSnapshot.val()
+                    
+                    if (!chatsData) return
+                    
+                    const updates = {}
+
+                    Object.entries(chatsData).forEach(([chatId, chat]) => {
+                        if (chat.users && chat.users.some(u => u.uid === user.uid)) {
+                            const currentUserProfile = props.allProfiles.find(p => p.userId === user.uid)
+                            
+                            if (!currentUserProfile) return
+
+                            chat.users.forEach((userObj, index) => {
+                                if (userObj.uid === user.uid) {
+                                    if (userObj.firstName !== currentUserProfile.firstName || 
+                                        userObj.lastName !== currentUserProfile.lastName ||
+                                        userObj.profileURL !== currentUserProfile.profileURL) {
+                                        
+                                        updates[`chats/${chatId}/users/${index}/firstName`] = currentUserProfile.firstName || ""
+                                        updates[`chats/${chatId}/users/${index}/lastName`] = currentUserProfile.lastName || ""
+                                        
+                                        if (currentUserProfile.profileURL) {
+                                            updates[`chats/${chatId}/users/${index}/profileURL`] = currentUserProfile.profileURL
+                                        }
+                                    }
+                                }
+                            })
+                        }
+                    })
+
+                    if (Object.keys(updates).length > 0) {
+                        await update(ref(realTimeDB), updates)
+                        console.log("Updated user info in chats")
+                    }
+                } catch (error) {
+                    console.error("Error updating user info in chats:", error)
+                }
+            }
+            
+            updateInChats()
+        }
+    }, [user, props.allProfiles])
+
     const showStatus = (message, type = "loading") => {
         setStatusPopup({ show: true, message, type })
     }
@@ -89,12 +137,13 @@ export default function Chats(props){
                 showStatus("Chat opened successfully!", "success")
                 return
             }
+            const currentUserProfile = props.allProfiles.find(p => p.userId === currentUserId)
             const otherUserProfile = props.allProfiles.find(p => p.userId === otherUserId)
             const newChatRef = push(chatsRef, {
                 users: [{
                             uid: currentUserId,
-                            firstName: props.userInfo.firstName,
-                            lastName: props.userInfo.lastName,
+                            firstName: currentUserProfile?.firstName || props.userInfo.firstName,
+                            lastName: currentUserProfile?.lastName || props.userInfo.lastName,
                         },
                         {
                             uid: otherUserId,
