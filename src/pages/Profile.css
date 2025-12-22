@@ -42,7 +42,7 @@
   margin-right: 0.5rem;
 }
 
-.user-profile h2, h3 {
+.user-profile h2, .user-profile h3 {
   margin-bottom: 8px;
   color: #2B3142;
   font-weight: 600;
@@ -58,6 +58,7 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  color: #2B3142;
 }
 
 .resumeContainer{
@@ -101,10 +102,15 @@
 
 /* File upload section */
 .file-upload {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 30px;
   margin-left: 20%;
   text-align: center;
-  width: 500px;
+  width: 100%;
+  max-width: 500px;
+  overflow: hidden;
 }
 
 .file-input {
@@ -113,6 +119,7 @@
   border: 1px solid #ccc;
   cursor: pointer;
   transition: border-color 0.3s, box-shadow 0.3s;
+  width: 100%;
 }
 
 .file-input:hover {
@@ -537,7 +544,7 @@
 .company-logo-default{
   width: 100px;
   height: 100px;
-  background-color: #7FB69E;
+  background-color: #a8d5ba98;
   padding: 1rem;
   border-radius: 10px;
 }
@@ -550,8 +557,51 @@
   color: #2B3142;
 }
 
+.company-details h3{
+  color: #2B3142;
+}
+
 .company-details a {
   color: #666;
   text-decoration: none;
 }
 
+.googleRole{
+  padding: 1rem 2rem 3rem 2rem;
+}
+
+.googleRole .bodyContent{
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.googleRole h2, h3{
+  margin-bottom: -0.2rem;
+}
+
+.choose-role{
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.choose-role button{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: transparent;
+  border: 2px solid #E1F1EC;
+  padding: 1rem;
+}
+
+.choose-role button:hover{
+  border-color: #A8D5BA;
+  background-color: #e6f5f157;
+}
+
+.choose-role svg{
+  background-color: #e6f5f1; 
+  padding: 1rem;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
