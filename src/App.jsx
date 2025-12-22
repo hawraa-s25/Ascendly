@@ -27,7 +27,7 @@ export default function App() {
         password: "",
         firstName: "",
         lastName: "",
-        role: "jobseeker"
+        role: ""
     })
     const [status, setStatus] = React.useState({
         action: "",
@@ -59,7 +59,7 @@ export default function App() {
                             email: user.email,
                             firstName: userDoc.data().firstName,
                             lastName: userDoc.data().lastName,
-                            role: userDoc.data().role || "jobseeker" 
+                            role: userDoc.data().role
                         })
                     }
 
@@ -140,11 +140,6 @@ export default function App() {
 
         createUserWithEmailAndPassword(auth, userInfo.email, userInfo.password)
         .then(async (currentUser) => {
-            const userData = {
-                ...userInfo,
-                role: userInfo.role || "jobseeker"
-            };
-
             setStatus({
                 action: "signup",
                 loading: false, 
@@ -256,7 +251,7 @@ export default function App() {
                     email: user.email,
                     firstName: firstName,
                     lastName: lastName,
-                    role: "jobseeker",
+                    role: "",
                 }
                 await setDoc(doc(db, "users", user.uid), userData)
 
