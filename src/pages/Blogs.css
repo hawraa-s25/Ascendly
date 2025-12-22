@@ -1,3 +1,4 @@
+/* CHANGED */
 
 .searchBlogBtn{
   position: absolute;
@@ -122,7 +123,7 @@
 
 /* Creating Blog */
 
-.form-container {
+.form-container, .googleRole {
   width: 500px;
   padding: 1.5rem;
   border-radius: 12px;
@@ -369,4 +370,86 @@
   padding: 3rem;
   gap: 1rem;
   color: #6b7280;
+}
+
+.like-btn, .comment-btn{
+  background-color: #F6F1E8;
+  color: #2B3142;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 15px;
+  border: 1px solid #a8d5ba42;
+  height: 2.3rem;
+  transition: all 0.3s ease;
+}
+
+.like-btn:hover, .comment-btn:hover{
+  background-color: #A8D5BA;
+}
+
+.like-btn.active, .comment-btn.active{
+  color: #F4F5EE;
+  background-color: #7FB69E;
+}
+
+.like-btn.active svg, .comment-btn.active svg{
+  fill: #F4F5EE;
+}
+
+#footer-btns{
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comments-section {
+  margin-top: 1rem;
+  padding: 0.7rem;
+  border-top: 1px solid #e0e7ff;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  margin: auto 1rem;
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem 0.5rem;
+  border-radius: 10px;
+  background-color: #F5F1E8;
+  margin-bottom: 0.7rem;
+}
+
+.comment-profile-details {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comment-profile-details img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.comment-profile-details .author {
+  font-weight: 600;
+  color: #2B3142;
+  margin-top: 0.3rem;
+}
+
+.comment-text {
+  font-size: 14px;
+  color: #374151;
+  margin: 0.3rem 2.5rem;
+}
+
+.no-comments{
+  text-align: center;
+  margin: 2rem auto;
 }
