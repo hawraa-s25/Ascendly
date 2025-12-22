@@ -107,7 +107,7 @@ export default function Jobs(props){
                     setAllJobs(jobs)
                     setFilteredJobs(jobs)
                     showStatus("Jobs loaded successfully!", "success")
-                })
+                })  
                 return ()=>unsubscribe()
             } catch (error) {
                 console.error(error)
@@ -118,28 +118,30 @@ export default function Jobs(props){
     },[])
 
     React.useEffect(()=>{
-        if (user && profile?.profileURL){
-        const updateProfileURLInDocs = async () => {
+        if (user && profile){
+        const updateProfileInDocs = async () => {
                 const jobsRef = collection(db, "jobs")
                 const unsubscribe = onSnapshot(jobsRef, (snapshot) => {
                     snapshot.docs.forEach(async (docSnap) => {
                         const job = docSnap.data()
-                        if (job.createdBy?.authorId === user.uid && job.createdBy?.profileURL !== profile.profileURL) {
-                            try {
-                                await updateDoc(doc(db, "jobs", docSnap.id), {
-                                    "createdBy.profileURL": profile.profileURL
-                                })
-                            } catch (error) {
-                                console.error("Failed to update profile URL:", error)
-                            }
+                        if(job.createdBy?.authorId === user.uid && 
+                            (job.createdBy?.profileURL !== profile.profileURL
+                                || job.createdBy?.firstName !== profile.firstName
+                                || job.createdBy?.lastName !== profile.lastName
+                            )){
+                            await updateDoc(doc(db, "jobs", docSnap.id), {
+                                "createdBy.profileURL": profile.profileURL,
+                                "createdBy.firstName": profile.firstName,
+                                "createdBy.lastName": profile.lastName
+                            })
                         }
                     })
                 })
                 return unsubscribe
             }
-            updateProfileURLInDocs() 
+            updateProfileInDocs() 
         }
-    },[profile?.profileURL, user])
+    },[profile?.firstName, profile?.lastName, profile?.profileURL, user])
 
     /* CRUD Functions */
 
@@ -666,8 +668,14 @@ export default function Jobs(props){
         return (
             <div className={`job-card ${isDeletingThis ? 'deleting' : ''}`}>
                 <div className="profile-details">
-                    <img src={job.createdBy.profileURL || defaultImage} onClick={()=>navigateToProfile(job)}/>
-                    <p className="job-author" onClick={()=>navigateToProfile(job)}>{job.createdBy.firstName || 'Unknown'} {job.createdBy.lastName || ''}</p>
+                    <img src={job.createdBy.profileURL || defaultImage} onClick={()=> {
+                        if (user) navigateToProfile(job)
+                        else props.triggerAuthPopup()
+                    }}/>
+                    <p className="job-author" onClick={()=>{
+                        if (user) navigateToProfile(job)
+                        else props.triggerAuthPopup()
+                    }}>{job.createdBy.firstName || 'Unknown'} {job.createdBy.lastName || ''}</p>
                     {(user && (job.createdBy.authorId === user.uid || profile?.role === "admin")) &&
                         <div className="action-buttons">
                             <button 
@@ -720,7 +728,7 @@ export default function Jobs(props){
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         aria-hidden="true"
-                        class="icon icon-location">
+                        className="icon icon-location">
                     <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 1118 0z"></path>
                     <circle cx="12" cy="10" r="2.5"></circle>
                     </svg> 
@@ -728,7 +736,7 @@ export default function Jobs(props){
                 }
                 {job.salary && (job.salary.min || job.salary.max) && (
                     <p className="svg-content">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FB69E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dollar-sign w-4 h-4" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FB69E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-dollar-sign w-4 h-4" aria-hidden="true">
                             <line x1="12" x2="12" y1="2" y2="22"></line>
                             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                         </svg>
@@ -745,7 +753,7 @@ export default function Jobs(props){
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         aria-hidden="true"
-                        class="icon icon-briefcase">
+                        className="icon icon-briefcase">
                     <rect x="2" y="7" width="20" height="13" rx="2" ry="2"></rect>
                     <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
                     <path d="M2 13h20"></path>
@@ -1167,11 +1175,11 @@ export default function Jobs(props){
                         <div className="profile-card">
                             <div id="profileHeader">
                                 <svg xmlns="http://www.w3.org/2000/svg"
-                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                    class="w-5 h-5">
-                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"
+                                    className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round"
                                     d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round"
+                                <path strokeLinecap="round" strokeLinejoin="round"
                                     d="M4.5 19.5a8.25 8.25 0 0115 0v.75H4.5v-.75z" />
                                 </svg>
                                 <p>Your Profile</p>
@@ -1186,8 +1194,8 @@ export default function Jobs(props){
                 </div>
                 {profile?.role !== "recruiter" && <div className="matchResumeCard">
                     <h3><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" 
-                            fill="none" stroke="currentColor" stroke-width="2" 
-                            stroke-linecap="round" stroke-linejoin="round">
+                            fill="none" stroke="currentColor" strokeWidth="2" 
+                            strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 2l1.5 3.5L17 7l-3.5 1.5L12 12l-1.5-3.5L7 7l3.5-1.5L12 2zM24 10l.75 1.75L27 12l-2.25.25L24 14l-.75-1.75L21 12l2.25-.25L24 10zM8 20l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/>
                         </svg>
 
@@ -1214,8 +1222,8 @@ export default function Jobs(props){
                         if (user) navigate("/app/jobs/recommended")
                         else props.triggerAuthPopup()
                     }}><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" 
-                        fill="none" stroke="currentColor" stroke-width="2" 
-                        stroke-linecap="round" stroke-linejoin="round">
+                        fill="none" stroke="currentColor" strokeWidth="2" 
+                        strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2l1.5 3.5L17 7l-3.5 1.5L12 12l-1.5-3.5L7 7l3.5-1.5L12 2zM24 10l.75 1.75L27 12l-2.25.25L24 14l-.75-1.75L21 12l2.25-.25L24 10zM8 20l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/>
                     </svg>
                     Find Matching Jobs</button>
@@ -1226,4 +1234,3 @@ export default function Jobs(props){
         </>
     )
 }
-
