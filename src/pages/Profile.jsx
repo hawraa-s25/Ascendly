@@ -16,6 +16,7 @@ export default function Profile(props){
     const navigate = useNavigate()
     const location = useLocation()
     const isBrowsing = location.pathname !== "/app/profile"
+    const signedWithGoogle = user?.providerData[0].providerId === "google.com"
 
     if (!user) {
         return (
@@ -38,7 +39,7 @@ export default function Profile(props){
         firstName: userInfo.firstName,
         lastName: userInfo.lastName,
         email: user.email,
-        role: userInfo.role,
+        role: "",
         bio: "",
         location: "",
         profileURL: "",
@@ -55,6 +56,7 @@ export default function Profile(props){
         message: "",
         type: "" 
     })
+    const [openPopup, setPopup] = React.useState(false)
 
     React.useEffect(() => {
         if (statusPopup.show && statusPopup.type !== "loading") {
@@ -87,6 +89,14 @@ export default function Profile(props){
         addProfileToDB(userData)
     },[user])
 
+    React.useEffect(() => {
+        if (signedWithGoogle && !userData.role) {
+            setPopup(true)
+        } else {
+            setPopup(false)
+        }
+    }, [signedWithGoogle, userData.role])
+
     async function loadProfileData() {
         showStatus("Loading profile...", "loading")
         try {
@@ -117,7 +127,7 @@ export default function Profile(props){
                     firstName: userInfo.firstName || googleFirstName || "",
                     lastName: userInfo.lastName || googleLastName || "",
                     email: user.email,
-                    role: userInfo.role || "jobseeker",
+                    role: userInfo.role,
                     bio: "",
                     location: "",
                     profileURL: "",
@@ -197,7 +207,7 @@ export default function Profile(props){
 
             showStatus("Extracting text from document...", "loading")
             
-            const response = await fetch('/api/extractData', {
+            const extractResponse = await fetch('/api/extractData', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -209,57 +219,73 @@ export default function Profile(props){
                 })
             })
 
-            const result = await response.json()
+            const extractResult = await extractResponse.json()
 
-            if (!response.ok || !result.success) {
-                throw new Error(result.error || `API Error: ${response.status}`)
+            if (!extractResponse.ok || !extractResult.success) {
+                throw new Error(extractResult.error || `API Error: ${extractResponse.status}`)
             }
+            
+            const extractedText = extractResult.extractedText
 
-            if (!result.extractedText || result.extractedText.trim().length === 0) {
+            if (!extractedText || extractedText.trim().length === 0) {
                 throw new Error("The document appears to be empty or no text could be extracted.")
             }
 
-            console.log(`Extracted ${result.characterCount} characters from ${file.name}:`, 
-                        result.extractedText.substring(0, 200) + "...")
+            showStatus("AI is structuring the extracted data...", "loading")
 
-            await updateDoc(doc(db, "profile", user.uid), {
-                ...userData, 
-                resumeText: result.extractedText,
+            const parseResponse = await fetch('/api/parseData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ resumeText: extractedText }),
+            })
+
+            const parseResult = await parseResponse.json()
+
+            if (!parseResponse.ok || !parseResult.success) {
+                throw new Error(parseResult.error || `AI parsing failed: ${parseResponse.status}`)
+            }
+            
+            const parsedData = parseResult.parsedData || {}
+
+            const updatedProfileData = {
+                ...parsedData,
+                resumeText: extractedText,
                 resumeURL: resumeURL,
                 resumeName: file.name
-            })
+            }
+            await updateDoc(doc(db, "profile", user.uid), updatedProfileData)
 
             setUserData(prev => ({ 
                 ...prev, 
-                resumeText: result.extractedText,
-                resumeURL: resumeURL,
-                resumeName: file.name,
+                ...updatedProfileData
             }))
 
             if (props.setResumeText) {
-                props.setResumeText(result.extractedText)
+                props.setResumeText(extractedText)
             }
 
             showStatus(
-                `Successfully processed ${file.name}! ` +
-                `Extracted ${result.characterCount} characters.`,
+                `Successfully parsed ${file.name} and updated your profile!`, 
                 "success"
             )
 
         } catch (error) {
             console.error("Document processing error:", error)
             let userMessage = error.message
-            
             if (error.message.includes("Failed to fetch") || 
                 error.message.includes("NetworkError")) {
                 userMessage = "Network error. Please check your internet connection and try again."
             } else if (error.message.includes("corrupt") || 
-                    error.message.includes("corrupted")) {
+                       error.message.includes("corrupted")) {
                 userMessage = "The file appears to be corrupted. Please try a different file."
             } else if (error.message.includes("password")) {
                 userMessage = "The document is password protected. Please remove the password and try again."
             } else if (error.message.includes("empty")) {
                 userMessage = "The document appears to be empty or contains no text."
+            } else if (error.message.includes("AI parsing failed")) {
+                userMessage = "AI parsing failed. The extracted text may be unclear or in an unsupported format."
             }
             
             showStatus(`Failed to process document: ${userMessage}`, "error")
@@ -752,12 +778,35 @@ export default function Profile(props){
     
     }
 
-    if (!user){
-        return <p>Loading profile...</p>
-    }
-
     return(
         <>
+            {openPopup && 
+            <div className="overlay">
+                <div className="googleRole">
+                    <div className="bodyContent">
+                        <h2>Welcome! Tell us about yourself</h2>
+                        <p>Choose your account type to personalize your experience</p>
+                    </div>
+                    <div className="choose-role">
+                        <button onClick={()=>{setUserData(prev => ({...prev, role: "jobseeker"}))}}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#7FB69E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-circle-user w-8 h-8 text-primary" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle>
+                                <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
+                            </svg>
+                            <h3>Job Seeker</h3>
+                            <p>I'm looking for job opportunities</p>
+                        </button>
+                        <button onClick={()=>{setUserData(prev => ({...prev, role: "recruiter"}))}}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 25" fill="none" stroke="#7FB69E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-briefcase w-8 h-8 text-primary" aria-hidden="true">
+                                <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                <rect width="20" height="14" x="2" y="6" rx="2"></rect>
+                            </svg>
+                            <h3>Job Recruiter</h3>
+                            <p>I'm hiring talent for my company</p>
+                        </button>
+                    </div>
+                </div>
+            </div>}
             <StatusPopup 
                 statusPopup={statusPopup} 
                 onClose={hideStatus}
@@ -788,7 +837,7 @@ export default function Profile(props){
                 <div className="user-profile-content">
                     <h2>{userData.firstName} {userData.lastName}</h2>
                     <p>{userData.professionTitle || ""}</p>
-                    <p className="svg-content"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#7FB69E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                    <p className="svg-content"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#7FB69E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="icon">
                             <rect x="2" y="4" width="16" height="12" rx="2" ry="2"/>
                             <polyline points="2,6 10,11 18,6"/>
                         </svg>
@@ -803,7 +852,7 @@ export default function Profile(props){
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             aria-hidden="true"
-                            class="icon icon-location">
+                            className="icon icon-location">
                         <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 1118 0z"></path>
                         <circle cx="12" cy="10" r="2.5"></circle>
                     </svg>{userData.location || "unspecified"}</p>
@@ -828,7 +877,7 @@ export default function Profile(props){
                 <>
                 <div className="resumeContainer">
                     <h3 className="svg-content">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="25" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="icon">
                             <path d="M4 2h9l5 5v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
                             <polyline points="13 2 13 7 18 7"/>
                             <line x1="6" y1="12" x2="14" y2="12"/>
@@ -846,7 +895,7 @@ export default function Profile(props){
                         />
                     </div> : 
                     <div className="resume-view">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="25" fill="none" stroke="#7FB69E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="25" fill="none" stroke="#7FB69E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="icon">
                             <path d="M4 2h9l5 5v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
                             <polyline points="13 2 13 7 18 7"/>
                             <line x1="6" y1="12" x2="14" y2="12"/>
@@ -882,7 +931,7 @@ export default function Profile(props){
                 <div className="jobSeekerProfile">
                     <div className="education-skills">
                         <div className="education-section">
-                        <h3 className="svg-content"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                        <h3 className="svg-content"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="icon">
                                 <path d="M4 10v4c0 1 3 2 6 2s6-1 6-2v-4"/>
                                 <path d="M2 8l8-4 8 4-8 4-8-4z"/>
                                 <path d="M12 12h0"/>
@@ -918,7 +967,7 @@ export default function Profile(props){
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 aria-hidden="true"
-                                class="icon icon-briefcase">
+                                className="icon icon-briefcase">
                             <rect x="2" y="7" width="20" height="13" rx="2" ry="2"></rect>
                             <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
                             <path d="M2 13h20"></path>
@@ -944,7 +993,7 @@ export default function Profile(props){
             {!isBrowsing && userData.role === "recruiter" && (
                 <div className="jobRecruiterProfile">
                 <h3 className="svg-content">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-building2 lucide-building-2 w-12 h-12 text-muted-foreground" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-building2 lucide-building-2 w-12 h-12 text-muted-foreground" aria-hidden="true">
                         <path d="M10 12h4"></path>
                         <path d="M10 8h4"></path>
                         <path d="M14 21v-3a2 2 0 0 0-4 0v3"></path>
@@ -964,7 +1013,7 @@ export default function Profile(props){
                     :
                     (
                         <div className="company-logo-default">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="M10 12h4"></path>
                                 <path d="M10 8h4"></path>
                                 <path d="M14 21v-3a2 2 0 0 0-4 0v3"></path>
@@ -987,7 +1036,7 @@ export default function Profile(props){
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             aria-hidden="true"
-                            class="icon icon-briefcase">
+                            className="icon icon-briefcase">
                             <rect x="2" y="7" width="20" height="13" rx="2" ry="2"></rect>
                             <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
                             <path d="M2 13h20"></path>
@@ -995,7 +1044,7 @@ export default function Profile(props){
                         {userData.industry || "Industry not specified"}
                     </p>
                     <p className="svg-content">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FB69E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe w-4 h-4" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FB69E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-globe w-4 h-4" aria-hidden="true">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
                             <path d="M2 12h20"></path>
@@ -1020,4 +1069,3 @@ export default function Profile(props){
         
     )
 }
-
