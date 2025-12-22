@@ -61,8 +61,10 @@ export function resetPostData(type, userInfo) {
     if (type === "blog") {
         return {
             content: "",
-            tags: [],
             imageURLs: [],
+            likedBy: [],
+            likeCount: 0,
+            commentCount: 0,
             ...base
         }
     }
@@ -79,8 +81,6 @@ export function resetPostData(type, userInfo) {
                 currency: "USD",
                 period: "year"
             },
-            tags: [],
-            isActive: false,
             ...base
         }
     }
