@@ -6,7 +6,12 @@ import {
     updateDoc, 
     onSnapshot, 
     addDoc,
-    deleteDoc
+    deleteDoc,
+    arrayUnion,
+    arrayRemove,
+    getDocs,
+    getDoc,
+    writeBatch
 } from "firebase/firestore"
 import {
     ref, 
@@ -42,7 +47,6 @@ export default function Blogs(props){
     const [blogPostData, setBlogData] = React.useState({
         title: "",
         content: "",
-        tags: [],
         imageURLs: [],
         createdBy: {
             authorId: user?.uid || "Anonymous",
@@ -52,7 +56,10 @@ export default function Blogs(props){
         },
         summary: "",
         isSummaryReady: false,
-        blogEmbedding: []
+        blogEmbedding: [],
+        likedBy: [],
+        likeCount: 0,
+        commentCount: 0
     })
     const [loadingImages, setLoadingImages] = React.useState(false)
     const [deletedImages, setDeletedImages] = React.useState([])
@@ -73,6 +80,9 @@ export default function Blogs(props){
         message: "",
         type: ""
     })
+    const [commentBlog, setCommentBlog] = React.useState(null)
+    const [comments, setComments] = React.useState({})
+    const [commentInput, setCommentInput] = React.useState("")
 
     React.useEffect(() => {
         if (statusPopup.show && statusPopup.type !== "loading") {
@@ -109,24 +119,55 @@ export default function Blogs(props){
         loadBlogs()
     }, [])
 
-    React.useEffect(()=>{
-        if(user && profile?.profileURL){
-            const updateProfileURLInDocs = async () => {
+
+    React.useEffect(() => {
+        if(user && profile){
+            const updateAuthorInfo = async () => {
                 const blogsRef = collection(db, "blogs")
                 onSnapshot(blogsRef, async (snapshot) => {
                     snapshot.docs.forEach(async (docSnap) => {
                         const blog = docSnap.data()
-                        if(blog.createdBy?.authorId === user.uid && blog.createdBy?.profileURL !== profile.profileURL){
+                        if(blog.createdBy?.authorId === user.uid && 
+                            (blog.createdBy?.profileURL !== profile.profileURL
+                                || blog.createdBy?.firstName !== profile.firstName
+                                || blog.createdBy?.lastName !== profile.lastName
+                            )){
                             await updateDoc(doc(db, "blogs", docSnap.id), {
-                                "createdBy.profileURL": profile.profileURL
+                                "createdBy.profileURL": profile.profileURL,
+                                "createdBy.firstName": profile.firstName,
+                                "createdBy.lastName": profile.lastName || ""
                             })
                         }
+                        
+                        const commentsRef = collection(db, "blogs", docSnap.id, "comments")
+                        const commentsSnapshot = await getDocs(commentsRef)
+                        
+                        commentsSnapshot.docs.forEach(async (commentDoc) => {
+                            const comment = commentDoc.data()
+                            if(comment.createdBy?.authorId === user.uid && 
+                                (comment.createdBy?.profileURL !== profile.profileURL
+                                    || comment.createdBy?.firstName !== profile.firstName
+                                    || comment.createdBy?.lastName !== profile.lastName
+                                )){
+                                await updateDoc(doc(db, "blogs", docSnap.id, "comments", commentDoc.id), {
+                                    "createdBy.profileURL": profile.profileURL,
+                                    "createdBy.firstName": profile.firstName,
+                                    "createdBy.lastName": profile.lastName || ""
+                                })
+                            }
+                        })
                     })
                 })
             }
-            updateProfileURLInDocs()
+            updateAuthorInfo()
         }
-    }, [profile?.profileURL, user])
+    }, [profile, user, db])
+
+    React.useEffect(()=>{
+        if (!commentBlog) return 
+        const unsubscribe = fetchComments(commentBlog)
+        return () => unsubscribe()
+    }, [commentBlog])
 
     function handleCreatePostBtn(){
         setCreating(prev => !prev)
@@ -165,14 +206,11 @@ export default function Blogs(props){
                     firstName: profile?.firstName || "",
                     lastName: profile?.lastName || "",
                     profileURL: profile?.profileURL || ""
-                }
+                },
+                commentCount: 0
             }
             const docRef = await addItemToDatabase(collectionName, finalBlogData)
             try {
-                /*const blogEmbedding = await createEmbeddings({ text: blogPostData.content })
-                await updateDoc(doc(db, collectionName, docRef.id), { 
-                    blogEmbedding: blogEmbedding.data.embedding 
-                })*/
                 const blogEmbedding = await createEmbeddings(blogPostData.content)
                 if (blogEmbedding && blogEmbedding.embedding) {
                     await updateDoc(doc(db, collectionName, docRef.id), { 
@@ -217,6 +255,11 @@ export default function Blogs(props){
         showStatus("Deleting blog post...", "loading")
         
         try {
+            const commentsRef = collection(db, "blogs", docID, "comments")
+            const commentsSnapshot = await getDocs(commentsRef)
+            const batch = writeBatch(db)
+            commentsSnapshot.docs.forEach( doc => {batch.delete(doc.ref)})
+            await batch.commit()
             await deletePost(collectionName, docID)
             if (urls && urls.length > 0) {
                 Promise.allSettled(
@@ -230,6 +273,12 @@ export default function Blogs(props){
                     })
                 ).catch(console.error)
             }
+
+            setComments(prev => {
+                const newComments = { ...prev }
+                delete newComments[docID]
+                return newComments
+            })
             
             showStatus("Blog post deleted successfully!", "success")
         } catch(error){
@@ -289,26 +338,6 @@ export default function Blogs(props){
         }
     }
 
-    /*async function handleSummarize(blogContent, blogId){
-        showStatus("Generating summary...", "loading")
-        try {
-            const blog = allBlogs.find(b => b.id === blogId)
-            if(!blog) throw new Error("Blog not found")
-            
-            if(!blog.summary){
-                const result = await summarizedBlog({ content: blogContent })
-                setAllBlogs(prev => prev.map(b => b.id===blogId ? {...b, summary: result.data.summary, isSummaryReady: true} : b))
-                showStatus("Summary generated successfully!", "success")
-            } else {
-                setAllBlogs(prev => prev.map(b => b.id===blogId ? {...b, isSummaryReady: !b.isSummaryReady} : b))
-                hideStatus()
-            }
-        } catch(error){
-            console.error(error)
-            showStatus("Failed to generate summary", "error")
-        }
-    }*/
-
     async function handleSummarize(blogContent, blogId){
         showStatus("Generating summary...", "loading")
         try {
@@ -330,6 +359,108 @@ export default function Blogs(props){
         } catch(error){
             console.error("Summary error:", error)
             showStatus("Failed to generate summary: " + (error.message || "Unknown error"), "error")
+        }
+    }
+
+    async function handleLike(blogId) {
+        const currentUserId = user.uid
+        const blog = allBlogs.find(b => b.id === blogId)
+        if (!blog) return
+
+        const userHasLiked = blog.likedBy && blog.likedBy.includes(currentUserId)
+        const newLikedBy = userHasLiked 
+            ? (blog.likedBy || []).filter(id => id !== currentUserId) 
+            : [...(blog.likedBy || []), currentUserId] 
+        
+        const newLikeCount = userHasLiked 
+            ? (blog.likeCount || 0) - 1 
+            : (blog.likeCount || 0) + 1
+
+        setAllBlogs(prev =>
+            prev.map(b =>
+                b.id === blogId ? { 
+                    ...b, 
+                    likedBy: newLikedBy, 
+                    likeCount: newLikeCount 
+                } : b
+            )
+        )
+
+        const likeOperation = userHasLiked
+            ? arrayRemove(currentUserId)
+            : arrayUnion(currentUserId)
+
+        try {
+            const blogRef = doc(db, "blogs", blogId)
+            await updateDoc(blogRef, {
+                likedBy: likeOperation,
+                likeCount: newLikeCount,
+            })
+            
+        } catch (error) {
+            console.error("Failed to update like in Firestore:", error)
+            setAllBlogs(prev =>
+                prev.map(b =>
+                    b.id === blogId ? { 
+                        ...b, 
+                        likedBy: blog.likedBy || [], 
+                        likeCount: blog.likeCount || 0 
+                    } : b
+                )
+            )
+        }
+    }
+
+    function fetchComments(blogID) {
+        const commentRef = collection(db, "blogs", blogID, "comments")
+        return onSnapshot(commentRef, (snapshot)=>{
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }))
+            setComments(prev=>({
+                ...prev,
+                [blogID]: data
+            }))
+        })
+    }
+
+    async function addComment(blogID){
+        if (!user){
+            props.triggerAuthPopup()
+            return
+        }
+        if (!commentInput.trim()) return
+        try {
+            const commentRef = collection(db, "blogs", blogID, "comments")
+            await addDoc(commentRef, {
+                text: commentInput,
+                createdBy: {
+                    authorId: user?.uid || "Anonymous",
+                    firstName: profile?.firstName || "",
+                    lastName: profile?.lastName || "",
+                    profileURL: profile?.profileURL || ""
+                }
+            })
+            const blogRef = doc(db, "blogs", blogID)
+            const blogSnapshot = await getDoc(blogRef)
+            const currentCommentCount = blogSnapshot.data()?.commentCount || 0
+            
+            await updateDoc(blogRef, {
+                commentCount: currentCommentCount + 1
+            })
+
+            setAllBlogs(prev => prev.map(blog => 
+                blog.id === blogID 
+                    ? { ...blog, commentCount: currentCommentCount + 1 }
+                    : blog
+            ))
+            
+            setCommentInput("")
+            
+        } catch (error) {
+            console.error("Error adding comment:", error)
+            showStatus("Failed to add comment", "error")
         }
     }
 
@@ -439,12 +570,20 @@ export default function Blogs(props){
     function renderBlogContent(blog) {
         const isDeletingThis = deleting.isDeleting && deleting.blogId === blog.id
         const isSummarizingThis = statusPopup.type === "loading" && statusPopup.message === "Generating summary..."
+        const userHasLiked = blog.likedBy && blog.likedBy.includes(user?.uid)
+        const blogComments = comments[blog.id] || []  
         
         return (
             <div className={`blog-card ${isDeletingThis ? 'deleting' : ''}`}>
                 <div className="profile-details">
-                    <img src={blog.createdBy.profileURL || defaultImage} alt="Author profile" onClick={()=>navigateToProfile(blog)}/>
-                    <p className="author" onClick={()=>navigateToProfile(blog)}>{blog.createdBy.firstName || 'Unknown'} {blog.createdBy.lastName || ''}</p>
+                    <img src={blog.createdBy.profileURL || defaultImage} alt="Author profile" onClick={()=>{
+                        if (user) navigateToProfile(blog)
+                        else props.triggerAuthPopup()
+                    }}/>
+                    <p className="author" onClick={()=>{
+                        if (user) navigateToProfile(blog)
+                        else props.triggerAuthPopup()
+                    }}>{blog.createdBy.firstName || 'Unknown'} {blog.createdBy.lastName || ''}</p>
                     {(user && (blog.createdBy.authorId === user.uid || profile?.role === "admin")) && 
                         <div className='action-buttons'>
                             <button 
@@ -503,19 +642,89 @@ export default function Blogs(props){
                         >›</button>          
                     </div>
                 )}
-                
-                <button 
-                    onClick={()=>handleSummarize(blog.content, blog.id)} 
-                    className="summarizeBtn"
-                    disabled={isSummarizingThis}
-                >
-                    {isSummarizingThis ? (
-                        <span className="button-loading">
-                            <div className="spinner"></div>
-                            Summarizing...
-                        </span>
-                    ) : blog.isSummaryReady ? "Show Full Content" : "Summarize"}
-                </button>
+
+                <div id="footer-btns">               
+                    <button 
+                        onClick={()=>{
+                            if (user) handleSummarize(blog.content, blog.id)
+                            else props.triggerAuthPopup()
+                        }} 
+                        className="summarizeBtn"
+                        disabled={isSummarizingThis}
+                    >
+                        {isSummarizingThis ? (
+                            <span className="button-loading">
+                                <div className="spinner"></div>
+                                Summarizing...
+                            </span>
+                        ) : blog.isSummaryReady ? "Show Full Content" : "Summarize"}
+                    </button>
+
+                    <button 
+                        className={userHasLiked ? "like-btn active" : "like-btn"} 
+                        onClick={()=>{
+                            if (user) handleLike(blog.id)
+                            else props.triggerAuthPopup()
+                        }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-heart w-4 h-4 fill-current" aria-hidden="true">
+                            <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path>
+                        </svg>
+                        {blog.likeCount}
+                    </button>
+
+                    <button
+                        className={commentBlog === blog.id ? "comment-btn active" : "comment-btn"}
+                        onClick={()=>setCommentBlog(prev => prev === blog.id ? null : blog.id)}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            width="20"
+                            height="20">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        {blog.commentCount || 0}
+                    </button>
+                </div>
+                {commentBlog === blog.id && (
+                    <div className="comments-section">
+                        <div className="comments-list">
+                        {blogComments?.length > 0 ? blogComments.map(comment => (
+                            <div key={comment.id} className="comment">
+                                <div className="comment-profile-details">
+                                    <img src={comment.createdBy.profileURL || defaultImage} alt="Author profile"/>                               
+                                    <p className="author">{comment.createdBy.firstName || 'Unknown'} {comment.createdBy.lastName || ''}</p>
+                                </div>
+                                <p className="comment-text">{comment.text}</p>
+                            </div>
+                        )) : <p className="no-comments">No comments yet. Be the first to comment!</p>}
+                        </div>
+
+                        <div className="message-input-container">
+                        <input
+                            type="text"
+                            value={commentInput}
+                            onChange={e => setCommentInput(e.target.value)}
+                            placeholder="Write a comment..."
+                            className="message-input"
+                        />
+                        <button 
+                            className="send-message-button"
+                            onClick={() => addComment(blog.id)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#F6F1E8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 25 18">
+                                <path d="M22 2 11 13"></path>
+                                <path d="M22 2 15 22 11 13 2 9z"></path>
+                            </svg>
+                        </button>
+                        </div>
+                    </div>
+                )}
             </div>
         )
     }
@@ -676,11 +885,11 @@ export default function Blogs(props){
                         <div className="profile-card">
                             <div id="profileHeader">
                                 <svg xmlns="http://www.w3.org/2000/svg"
-                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                    class="w-5 h-5">
-                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"
+                                    className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round"
                                     d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round"
+                                <path strokeLinecap="round" strokeLinejoin="round"
                                     d="M4.5 19.5a8.25 8.25 0 0115 0v.75H4.5v-.75z" />
                                 </svg>
                                 <p>Your Profile</p>
@@ -695,8 +904,8 @@ export default function Blogs(props){
                 </div>
                 {profile?.role !== "recruiter" && <div className="matchResumeCard">
                     <h3><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" 
-                            fill="none" stroke="currentColor" stroke-width="2" 
-                            stroke-linecap="round" stroke-linejoin="round">
+                            fill="none" stroke="currentColor" strokeWidth="2" 
+                            strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 2l1.5 3.5L17 7l-3.5 1.5L12 12l-1.5-3.5L7 7l3.5-1.5L12 2zM24 10l.75 1.75L27 12l-2.25.25L24 14l-.75-1.75L21 12l2.25-.25L24 10zM8 20l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/>
                         </svg>
 
@@ -723,8 +932,8 @@ export default function Blogs(props){
                         if (user) navigate("/app/jobs/recommended")
                         else props.triggerAuthPopup()
                     }}><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" 
-                        fill="none" stroke="currentColor" stroke-width="2" 
-                        stroke-linecap="round" stroke-linejoin="round">
+                        fill="none" stroke="currentColor" strokeWidth="2" 
+                        strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2l1.5 3.5L17 7l-3.5 1.5L12 12l-1.5-3.5L7 7l3.5-1.5L12 2zM24 10l.75 1.75L27 12l-2.25.25L24 14l-.75-1.75L21 12l2.25-.25L24 10zM8 20l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/>
                     </svg>
                     Find Matching Jobs</button>
@@ -735,4 +944,3 @@ export default function Blogs(props){
     </>
     )
 }
-
