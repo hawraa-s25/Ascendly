@@ -272,7 +272,7 @@ export default function BrowseProfiles(props){
                     :
                     (
                         <div className="company-logo-default">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="M10 12h4"></path>
                                 <path d="M10 8h4"></path>
                                 <path d="M14 21v-3a2 2 0 0 0-4 0v3"></path>
