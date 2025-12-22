@@ -1,3 +1,7 @@
+h3{
+  color: #2B3142;
+}
+
 .navBar{
   display: flex;
   align-items: center;
@@ -24,9 +28,10 @@
   gap: 4rem;
   font-size: 1.1rem;
   padding: 0.4rem 0.8rem;
+  border-radius: 8px;  
   margin: 0 0.7rem;
-  border-radius: 8px;
   transition: all 0.25s ease;
+
 }
 
 .nav-link:hover {
