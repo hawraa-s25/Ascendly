@@ -43,6 +43,8 @@ export default function Blogs(props){
     const collectionName="blogs"
     const profile = user ? props.allProfiles.find(profile => profile.userId === user.uid) : null
     const navigate = useNavigate()
+
+    //States
     
     const [blogPostData, setBlogData] = React.useState({
         title: "",
@@ -84,6 +86,8 @@ export default function Blogs(props){
     const [comments, setComments] = React.useState({})
     const [commentInput, setCommentInput] = React.useState("")
 
+    //Status declaration for toast alerts
+
     React.useEffect(() => {
         if (statusPopup.show && statusPopup.type !== "loading") {
             const timer = setTimeout(() => {
@@ -101,6 +105,8 @@ export default function Blogs(props){
     const hideStatus = () => {
         setStatusPopup({ show: false, message: "", type: "" })
     }
+
+    //Listeners
 
     React.useEffect(() => {
         const loadBlogs = () => {
@@ -168,6 +174,8 @@ export default function Blogs(props){
         const unsubscribe = fetchComments(commentBlog)
         return () => unsubscribe()
     }, [commentBlog])
+
+    //Handling functions
 
     function handleCreatePostBtn(){
         setCreating(prev => !prev)
@@ -249,6 +257,81 @@ export default function Blogs(props){
             showStatus("Failed to upload images", "error")
         }
     }
+
+    async function handleSummarize(blogContent, blogId){
+        showStatus("Generating summary...", "loading")
+        try {
+            const blog = allBlogs.find(b => b.id === blogId)
+            if(!blog) throw new Error("Blog not found")
+            
+            if(!blog.summary){
+                const result = await summarizedBlog(blogContent)
+                if (!result || !result.summary) {
+                    throw new Error("No summary returned from API")
+                }
+                
+                setAllBlogs(prev => prev.map(b => b.id===blogId ? {...b, summary: result.summary, isSummaryReady: true} : b))
+                showStatus("Summary generated successfully!", "success")
+            } else {
+                setAllBlogs(prev => prev.map(b => b.id===blogId ? {...b, isSummaryReady: !b.isSummaryReady} : b))
+                hideStatus()
+            }
+        } catch(error){
+            console.error("Summary error:", error)
+            showStatus("Failed to generate summary: " + (error.message || "Unknown error"), "error")
+        }
+    }
+
+    async function handleLike(blogId) {
+        const currentUserId = user.uid
+        const blog = allBlogs.find(b => b.id === blogId)
+        if (!blog) return
+
+        const userHasLiked = blog.likedBy && blog.likedBy.includes(currentUserId)
+        const newLikedBy = userHasLiked 
+            ? (blog.likedBy || []).filter(id => id !== currentUserId) 
+            : [...(blog.likedBy || []), currentUserId] 
+        
+        const newLikeCount = userHasLiked 
+            ? (blog.likeCount || 0) - 1 
+            : (blog.likeCount || 0) + 1
+
+        setAllBlogs(prev =>
+            prev.map(b =>
+                b.id === blogId ? { 
+                    ...b, 
+                    likedBy: newLikedBy, 
+                    likeCount: newLikeCount 
+                } : b
+            )
+        )
+
+        const likeOperation = userHasLiked
+            ? arrayRemove(currentUserId)
+            : arrayUnion(currentUserId)
+
+        try {
+            const blogRef = doc(db, "blogs", blogId)
+            await updateDoc(blogRef, {
+                likedBy: likeOperation,
+                likeCount: newLikeCount,
+            })
+            
+        } catch (error) {
+            console.error("Failed to update like in Firestore:", error)
+            setAllBlogs(prev =>
+                prev.map(b =>
+                    b.id === blogId ? { 
+                        ...b, 
+                        likedBy: blog.likedBy || [], 
+                        likeCount: blog.likeCount || 0 
+                    } : b
+                )
+            )
+        }
+    }
+
+    //Modify blog posts
 
     async function deleteBlogPost(docID, urls){
         setDeleting({ blogId: docID, isDeleting: true })
@@ -338,78 +421,7 @@ export default function Blogs(props){
         }
     }
 
-    async function handleSummarize(blogContent, blogId){
-        showStatus("Generating summary...", "loading")
-        try {
-            const blog = allBlogs.find(b => b.id === blogId)
-            if(!blog) throw new Error("Blog not found")
-            
-            if(!blog.summary){
-                const result = await summarizedBlog(blogContent)
-                if (!result || !result.summary) {
-                    throw new Error("No summary returned from API")
-                }
-                
-                setAllBlogs(prev => prev.map(b => b.id===blogId ? {...b, summary: result.summary, isSummaryReady: true} : b))
-                showStatus("Summary generated successfully!", "success")
-            } else {
-                setAllBlogs(prev => prev.map(b => b.id===blogId ? {...b, isSummaryReady: !b.isSummaryReady} : b))
-                hideStatus()
-            }
-        } catch(error){
-            console.error("Summary error:", error)
-            showStatus("Failed to generate summary: " + (error.message || "Unknown error"), "error")
-        }
-    }
-
-    async function handleLike(blogId) {
-        const currentUserId = user.uid
-        const blog = allBlogs.find(b => b.id === blogId)
-        if (!blog) return
-
-        const userHasLiked = blog.likedBy && blog.likedBy.includes(currentUserId)
-        const newLikedBy = userHasLiked 
-            ? (blog.likedBy || []).filter(id => id !== currentUserId) 
-            : [...(blog.likedBy || []), currentUserId] 
-        
-        const newLikeCount = userHasLiked 
-            ? (blog.likeCount || 0) - 1 
-            : (blog.likeCount || 0) + 1
-
-        setAllBlogs(prev =>
-            prev.map(b =>
-                b.id === blogId ? { 
-                    ...b, 
-                    likedBy: newLikedBy, 
-                    likeCount: newLikeCount 
-                } : b
-            )
-        )
-
-        const likeOperation = userHasLiked
-            ? arrayRemove(currentUserId)
-            : arrayUnion(currentUserId)
-
-        try {
-            const blogRef = doc(db, "blogs", blogId)
-            await updateDoc(blogRef, {
-                likedBy: likeOperation,
-                likeCount: newLikeCount,
-            })
-            
-        } catch (error) {
-            console.error("Failed to update like in Firestore:", error)
-            setAllBlogs(prev =>
-                prev.map(b =>
-                    b.id === blogId ? { 
-                        ...b, 
-                        likedBy: blog.likedBy || [], 
-                        likeCount: blog.likeCount || 0 
-                    } : b
-                )
-            )
-        }
-    }
+    //Blog comments functions
 
     function fetchComments(blogID) {
         const commentRef = collection(db, "blogs", blogID, "comments")
@@ -464,6 +476,8 @@ export default function Blogs(props){
         }
     }
 
+    //Searching function
+
     async function searchBlog(){
         if (!searchText.trim()) {
             showStatus("Please enter search text", "error")
@@ -490,6 +504,8 @@ export default function Blogs(props){
         props.setSelectedProfile(blogProfile)
         navigate("/app/profile/browse")
     }
+
+    //Rendering functions
 
     function renderEditModal() {
         if (!editing.isEditing) return null
@@ -717,7 +733,7 @@ export default function Blogs(props){
                             className="send-message-button"
                             onClick={() => addComment(blog.id)}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#F6F1E8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 25 18">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#e6dacc99" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 25 18">
                                 <path d="M22 2 11 13"></path>
                                 <path d="M22 2 15 22 11 13 2 9z"></path>
                             </svg>
