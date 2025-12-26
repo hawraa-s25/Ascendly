@@ -1,7 +1,7 @@
 import React from "react"
 import { createEmbeddings } from "../firebase"
 import { useNavigate, useOutletContext } from "react-router-dom"
-import { updateDoc, doc, query, where, collection, getDocs, onSnapshot, getDoc, setDoc } from "firebase/firestore"
+import { doc, query, where, collection, getDoc, setDoc } from "firebase/firestore"
 import { cosineSimilarity } from "../commonFunctions"
 import defaultImage from "./defaultProfileImage.jpeg"
 import StatusPopup from "./StatusPopup"
@@ -11,6 +11,8 @@ export default function RecommendedJobs(){
     const q = user ? query(collection(db, "profile"), where("userId", "==", user.uid)) : null
     const navigate = useNavigate()
 
+    //States
+
     const [resumeEmbedding, setResumeEmbedding] = React.useState([])
     const [recommendedJobs, setRecommendedJobs] = React.useState([])
     const [fetchedJobs, setFetchedJobs] = React.useState([])
@@ -19,6 +21,8 @@ export default function RecommendedJobs(){
         message: "",
         type: ""
     })
+
+    //Status declaration for toast alerts
 
     React.useEffect(() => {
         if (statusPopup.show && statusPopup.type !== "loading") {
@@ -38,6 +42,8 @@ export default function RecommendedJobs(){
         setStatusPopup({ show: false, message: "", type: "" })
     }
 
+    //Listeners
+
     React.useEffect(()=>{
         if (user){
             fetchRecommendedJobs()
@@ -51,6 +57,8 @@ export default function RecommendedJobs(){
             setFetchedJobs(recommendedJobs)
         }
     },[recommendedJobs])
+
+    //Resume Matching
 
     async function matchResume() {
 
@@ -68,26 +76,11 @@ export default function RecommendedJobs(){
         
         try {
             console.log("Calling function...")
-            /*const resumeEmbeddings = await createEmbeddings({
-                text: resumeText
-            })
-            
-            console.log("Success for resume:", resumeEmbeddings.data)
-            console.log("Success for job:", jobEmbeddings)
-
-            const similarities = allJobs.map((job,index)=>{
-                const jobEmbed = jobEmbeddings && jobEmbeddings[index]
-                if (!jobEmbed) return null
-                return {
-                    ...job,
-                    score: cosineSimilarity(resumeEmbeddings.data.embedding, jobEmbed)
-            }}).filter(Boolean)*/
-            const resumeEmbeddings = await createEmbeddings(resumeText) // Remove the wrapper object
+            const resumeEmbeddings = await createEmbeddings(resumeText)
 
             console.log("Success for resume:", resumeEmbeddings)
             console.log("Success for job:", jobEmbeddings)
 
-            // Check if embedding exists in the response
             if (!resumeEmbeddings || !resumeEmbeddings.embedding) {
                 throw new Error("No embedding generated for resume")
             }
@@ -97,7 +90,7 @@ export default function RecommendedJobs(){
                 if (!jobEmbed) return null
                 return {
                     ...job,
-                    score: cosineSimilarity(resumeEmbeddings.embedding, jobEmbed) // Remove .data
+                    score: cosineSimilarity(resumeEmbeddings.embedding, jobEmbed)
             }}).filter(Boolean)
             similarities.sort((a,b)=> b.score - a.score)
             const topJobs = similarities.slice(0,10)
@@ -234,7 +227,6 @@ export default function RecommendedJobs(){
                             {jobObj.jobType}</p>
                         }
                         {jobObj.applicationURL && <p className="application-link"><span>Apply here:</span> <a href={`${jobObj.applicationURL}`} target="_blank" rel="noopener noreferrer">{jobObj.applicationURL}</a></p>}
-                        <p className="job-score">Match Score: {(jobObj.score * 100).toFixed(0)}%</p>
                     </article>
                 ))}
             </div></> 
