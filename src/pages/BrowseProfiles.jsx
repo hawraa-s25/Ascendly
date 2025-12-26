@@ -14,6 +14,8 @@ export default function BrowseProfiles(props){
     
     const profile = allProfiles.find(profile => profile.userId === user.uid)
 
+    //Status declaration for toast alerts
+
     React.useEffect(() => {
         if (statusPopup.show && statusPopup.type !== "loading") {
             const timer = setTimeout(() => {
@@ -31,6 +33,8 @@ export default function BrowseProfiles(props){
     const hideStatus = () => {
         setStatusPopup({ show: false, message: "", type: "" })
     }
+
+    //Handling functions
 
     function handleViewProfile(profile){
         props.setSelectedProfile(profile)
@@ -50,6 +54,8 @@ export default function BrowseProfiles(props){
             showStatus("Failed to open admin edit", "error")
         }
     }
+
+    //Trigger popup if no user authenticated
 
     if (!user) {
         return (
