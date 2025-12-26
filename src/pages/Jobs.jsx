@@ -6,9 +6,6 @@ import {
     collection, 
     updateDoc, 
     onSnapshot, 
-    where,
-    query,
-    getDocs
 } from "firebase/firestore"
 import { 
     addItemToDatabase, 
@@ -32,6 +29,8 @@ export default function Jobs(props){
     const isRecommended = location.pathname !== "/app/jobs"
     const profile = user ? props.allProfiles.find(profile => profile.userId === user.uid) : null
     const navigate = useNavigate()
+
+    //States
 
     const [jobPostData, setJobData] = React.useState({
         title: "",
@@ -81,6 +80,8 @@ export default function Jobs(props){
         type: ""
     })
 
+    //Status declaration for toast alerts
+
     React.useEffect(() => {
         if (statusPopup.show && statusPopup.type !== "loading") {
             const timer = setTimeout(() => {
@@ -98,6 +99,8 @@ export default function Jobs(props){
     const hideStatus = () => {
         setStatusPopup({ show: false, message: "", type: "" })
     }
+
+    //Listeners
 
     React.useEffect(()=>{
         const loadJobs = async () => {
@@ -414,6 +417,8 @@ export default function Jobs(props){
         showStatus("Filters cleared", "success")
     }
 
+    //Post Modification
+
     async function deleteJobPost(docID){
         setDeleting({ jobId: docID, isDeleting: true })
         showStatus("Deleting job post...", "loading")
@@ -454,6 +459,7 @@ export default function Jobs(props){
     }
 
     /* Rendering Functions */
+    
     function renderEditModal() {
         if (!editing.isEditing) return null
         
