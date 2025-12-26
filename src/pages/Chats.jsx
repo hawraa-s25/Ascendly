@@ -15,6 +15,8 @@ export default function Chats(props){
         type: ""
     })
 
+    //Popup if no user authenticated
+
     if (!user) {
         return (
             <>
@@ -32,6 +34,8 @@ export default function Chats(props){
     const userRef = ref(realTimeDB, "users/" + user.uid)
     const chatsRef = ref(realTimeDB, "chats")
 
+    //States
+
     const [ chats, setChats ] = React.useState({})
     const [ activeChatId, setActiveChat ] = React.useState(null)
     const [ activeMessageId, setActiveMsg ] = React.useState(null)
@@ -42,6 +46,8 @@ export default function Chats(props){
     const [ isViewingChat, setViewingChat ] = React.useState(false)
 
     const messagesRef = ref(realTimeDB, `messages/${activeChatId}`)
+
+    //Listeners
 
     React.useEffect(() => {
         if (statusPopup.show && statusPopup.type !== "loading") {
@@ -119,6 +125,8 @@ export default function Chats(props){
         return () => cleanUpChats()
     }, [])
 
+    //Chat Creation
+
     function createChats(currentUserId, otherUserId){
         showStatus("Creating new chat...", "loading")
         try{
@@ -170,6 +178,8 @@ export default function Chats(props){
         }
     }
 
+    //Handling Functions
+
     function handleMessageInput(e){
         setText(e.target.value)
     }
@@ -180,6 +190,8 @@ export default function Chats(props){
         setViewingChat(true)
         showStatus("Chat opened", "success")
     }
+
+    //Messaging Functions
 
     function sendMessage(){
         if (!messageText.trim()) {
@@ -397,7 +409,7 @@ export default function Chats(props){
                             {statusPopup.type === "loading" ? (
                                 <div className="spinner small"></div>
                             ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#F6F1E8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 25 18">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#e6dacc99" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 25 18">
                                     <path d="M22 2 11 13"></path>
                                     <path d="M22 2 15 22 11 13 2 9z"></path>
                                 </svg>
