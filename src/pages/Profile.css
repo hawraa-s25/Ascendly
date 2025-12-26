@@ -1,5 +1,7 @@
+/* Profile Navigation */
+
 .profile-navigation{
-  background-color: #EBE7DD;
+  background-color: #e6dacc99;
   border: none;
   border-radius: 20px;  
   display: flex;
@@ -18,6 +20,8 @@
 .profile-navigation button.active{
   background-color: #fff;
 }
+
+/* User Information */
 
 .user-profile, .resumeContainer {
   background-color: #fff;
@@ -61,6 +65,8 @@
   color: #2B3142;
 }
 
+/* Resume */
+
 .resumeContainer{
   flex-direction: column;
   padding: 1rem;
@@ -91,7 +97,7 @@
 }
 
 .resume-view button{
-  background-color: #F6F1E8;
+  background-color: #e6dacc99;
   padding: 0.3rem 0.8rem;
   transition: background-color 0.3s ease;
 }
@@ -101,6 +107,7 @@
 }
 
 /* File upload section */
+
 .file-upload {
   display: flex;
   justify-content: center;
@@ -127,7 +134,6 @@
   box-shadow: 0 0 5px #7FB69E;
 }
 
-
 /* Other profiles list */
 
 .browseBodyContent{
@@ -140,7 +146,7 @@
 }
 
 .profiles-list {
-  background-color: #FCF8F3;
+  background-color: #F7EDE3;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -229,7 +235,8 @@
   max-width: 400px;
 }
 
-/* Dark overlay behind the popup - Updated to match jobs/blogs */
+/* Edit Profile */
+
 .editProfileOverlay {
   position: fixed;
   top: 0;
@@ -245,7 +252,7 @@
 }
 
 .editProfileContainer {
-  background: #FCF8F3;
+  background: #F7EDE3;
   width: 600px;
   max-width: 100%;
   max-height: 90vh;
@@ -280,7 +287,7 @@
 }
 
 .editProfileContainer input {
-  background-color: #F5F1E8;
+  background-color: #E6DACC99;
   color: #2B3142;
   border: none;
   filter: none;
@@ -421,6 +428,8 @@
   margin: 1.5rem 12rem;
 }
 
+/* Seeker Details */
+
 .education-skills{
   display: flex;
   justify-content: space-between;
@@ -447,7 +456,7 @@
 }
 
 .skills-list li {
-  background-color: #F5F1E8;
+  background-color: #E6DACC99;
   color: #2B3142; 
   padding: 0.5rem 0.6rem;
   border-radius: 13px; 
@@ -513,7 +522,7 @@
   color: #999;
 }
 
-/* Job Recruiter Information */
+/* Job Recruiter Details */
 
 .jobRecruiterProfile{
   background-color: #fff;
@@ -542,14 +551,12 @@
 }
 
 .company-logo-default{
-  width: 100px;
+  min-width: 100px;
   height: 100px;
   background-color: #a8d5ba98;
   padding: 1rem;
   border-radius: 10px;
 }
-
-/* Text content */
 
 .company-details h2 {
   font-size: 1.25rem;
@@ -565,6 +572,8 @@
   color: #666;
   text-decoration: none;
 }
+
+/* Google Auth Role Selection */
 
 .googleRole{
   padding: 1rem 2rem 3rem 2rem;
