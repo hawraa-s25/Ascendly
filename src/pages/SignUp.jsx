@@ -1,5 +1,3 @@
-//CHANGED
-
 import { Link, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import logo from "../ascendly-logo.png"
@@ -259,3 +257,4 @@ export default function SignUp(props) {
         </div>
       )
     }
+
