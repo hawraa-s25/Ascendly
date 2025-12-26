@@ -18,6 +18,8 @@ export default function Profile(props){
     const isBrowsing = location.pathname !== "/app/profile"
     const signedWithGoogle = user?.providerData[0].providerId === "google.com"
 
+    //Trigger popup if no user authenticated
+
     if (!user) {
         return (
                 <div className="bodyContent">
@@ -30,6 +32,8 @@ export default function Profile(props){
     }
 
     const profileRef = doc(db, "profile", user.uid)
+
+    //States
 
     const [userData, setUserData] = React.useState({
         resumeText: "",
@@ -58,6 +62,8 @@ export default function Profile(props){
     })
     const [openPopup, setPopup] = React.useState(false)
 
+    //Status declaration for toast alerts
+
     React.useEffect(() => {
         if (statusPopup.show && statusPopup.type !== "loading") {
             const timer = setTimeout(() => {
@@ -75,6 +81,8 @@ export default function Profile(props){
     const hideStatus = () => {
         setStatusPopup({ show: false, message: "", type: "" })
     }
+
+    //Listeners
 
     React.useEffect(() => {
         loadProfileData()
@@ -96,6 +104,8 @@ export default function Profile(props){
             setPopup(false)
         }
     }, [signedWithGoogle, userData.role])
+
+    //Loading
 
     async function loadProfileData() {
         showStatus("Loading profile...", "loading")
@@ -169,6 +179,8 @@ export default function Profile(props){
             throw error
         }
     }
+
+    //Resume Actions
 
     async function handleResumeChange(e) {
         const file = e.target.files[0]
@@ -292,6 +304,8 @@ export default function Profile(props){
         }
     }
 
+    //Profile Edit Submit
+
     async function saveProfileChanges(profileData, isAdmin = false, onSuccess = null){
         showStatus("Saving profile changes...", "loading")
         try {
@@ -310,6 +324,8 @@ export default function Profile(props){
             showStatus("Failed to save profile changes", "error")
         }
     }
+
+    //Skills CRUD
 
     function addSkill(e){
         e.preventDefault()
@@ -353,6 +369,8 @@ export default function Profile(props){
             [type]: prev[type].filter((_, i) => i !== index),
         }))
     }
+
+    //Handling Functions
 
     async function handleImageChange(e){
         showStatus("Uploading profile image...", "loading")
@@ -410,6 +428,8 @@ export default function Profile(props){
         setAdminEditData({...profile})
         setIsAdminEditing(true)
     }
+
+    //Rendering Functions
 
     function renderEditProfile(onClose = () => setEditing(false), isAdmin = false){
 
