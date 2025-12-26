@@ -808,7 +808,12 @@ export default function Profile(props){
                         <p>Choose your account type to personalize your experience</p>
                     </div>
                     <div className="choose-role">
-                        <button onClick={()=>{setUserData(prev => ({...prev, role: "jobseeker"}))}}>
+                        <button onClick={async () => {
+                            const updatedData = { ...userData, role: "jobseeker" }
+                            setUserData(updatedData)
+                            await saveProfileChanges(updatedData)
+                            setPopup(false)
+                        }}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#7FB69E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-circle-user w-8 h-8 text-primary" aria-hidden="true">
                                 <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle>
                                 <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
@@ -816,7 +821,12 @@ export default function Profile(props){
                             <h3>Job Seeker</h3>
                             <p>I'm looking for job opportunities</p>
                         </button>
-                        <button onClick={()=>{setUserData(prev => ({...prev, role: "recruiter"}))}}>
+                        <button onClick={async () => {
+                            const updatedData = { ...userData, role: "recruiter" }
+                            setUserData(updatedData)
+                            await saveProfileChanges(updatedData)  /
+                            setPopup(false) 
+                        }}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 25" fill="none" stroke="#7FB69E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-briefcase w-8 h-8 text-primary" aria-hidden="true">
                                 <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                                 <rect width="20" height="14" x="2" y="6" rx="2"></rect>
