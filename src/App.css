@@ -35,7 +35,7 @@ h3{
 }
 
 .nav-link:hover {
-  background-color: #F6F1E8; 
+  background-color: #e6dacc99; 
   color: #2E2B26;
   transform: translateY(-2px); 
 }
@@ -92,7 +92,7 @@ h3{
 }
 
 .auth-popup-card {
-  background-color: #FCF8F3;
+  background-color: #F7EDE3;
   width: 40%;
   height: 62vh;
   border-radius: 10px;
@@ -184,11 +184,6 @@ h3{
   color: #374151;
   font-weight: 500;
   margin: 0;
-}
-
-.error-icon {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
 }
 
 .error-message {
