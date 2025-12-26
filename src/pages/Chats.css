@@ -1,5 +1,5 @@
+/* Profiles list popup */
 
-/* Profiles List */
 .overlay{
   position: fixed;
   top: 0;
@@ -17,7 +17,7 @@
   padding: 2rem;
   border: 1px solid #ddd;
   border-radius: 16px;
-  background-color: #FCF8F3;
+  background-color: #F7EDE3;
   width: 38%;
   max-height: 80vh;
   overflow-y: auto;
@@ -44,12 +44,12 @@
   align-items: center;
   margin-bottom: 0.5rem;
   border-radius: 16px;
-  border-bottom: 2px solid #F5F1E8;
+  border-bottom: 2px solid #E6DACC99;
   padding: 0.3rem;
 }
 
 .profile-item:hover{
-  background-color: #F5F1E8;
+  background-color: #E6DACC99;
 }
 
 .profile-item img, .chat-item img{
@@ -84,6 +84,7 @@
 }
 
 /* Previous Chats */
+
 .previous-chats-container {
   min-width: 35%;
   max-width: 35%;
@@ -114,7 +115,7 @@
 }
 
 .chat-button:focus, .chat-button:hover{
-  background-color: #F5F1E8;
+  background-color: #E6DACC99;
 }
 
 .chat-info {
@@ -153,6 +154,7 @@
 }
 
 /* Active Chat Page */
+
 .chat-page {
   margin: 1rem;
   border: 1px solid #E1F1EC;
@@ -198,7 +200,7 @@
 }
 
 .other-message {
-  background-color: #F5F1E8; 
+  background-color: #E6DACC99; 
   margin-right: auto;
 }
 
@@ -218,7 +220,7 @@
   flex: 1;
   padding: 0.1rem 1rem;
   border-radius: 10px;
-  background-color: #F6F1E8;
+  background-color: #e6dacc99;
   filter: none;
 }
 
@@ -230,7 +232,7 @@
 
 .send-message-button {
   padding: 0.5rem 0.7rem;
-  background-color: #7FB69E; /* indigo */
+  background-color: #7FB69E;
   border: none;
   border-radius: 10px;
   cursor: pointer;
