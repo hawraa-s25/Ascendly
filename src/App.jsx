@@ -128,9 +128,23 @@ export default function App() {
         setShowPassword(prevType => !prevType)
     }
 
-    /* Authentication Functions*/
+    function isStrongPassword(password) {
+        const regex = /^(?=.*[\d!@#$%^&*]).{8,}$/
+        return regex.test(password)
+    }
 
+    /* Authentication Functions */
     function createAccount() {
+        if (!isStrongPassword(userInfo.password)) {
+            setStatus({
+                action: "signup",
+                loading: false,
+                error: "Password must be at least 8 characters and include at least one number or special character.",
+                success: false
+            })
+            return
+        }
+
         setStatus({
             action: "signup",
             loading: true, 
@@ -140,6 +154,17 @@ export default function App() {
 
         createUserWithEmailAndPassword(auth, userInfo.email, userInfo.password)
         .then(async (currentUser) => {
+
+            const userData = {
+                email: userInfo.email,
+                firstName: userInfo.firstName,
+                lastName: userInfo.lastName,
+                role: userInfo.role || ""
+            }
+            await setDoc(doc(db, "users", currentUser.user.uid), userData)
+            setUser(currentUser.user)
+            setUserInfo(userData)
+
             setStatus({
                 action: "signup",
                 loading: false, 
@@ -147,8 +172,6 @@ export default function App() {
                 success: true
             })
 
-            setUser(currentUser.user)
-            await setDoc(doc(db, "users", currentUser.user.uid), userData)
             console.log("Account created successfully")
         }).catch((error) => {
             setStatus({
@@ -161,6 +184,7 @@ export default function App() {
         })
     }
 
+
     function getEmail(value){
         setUserInfo(prevInfo=>({
             ...prevInfo,
@@ -170,11 +194,21 @@ export default function App() {
     }
 
     function getPassword(value){
-        setUserInfo(prevInfo=>({
+        setUserInfo(prevInfo => ({
             ...prevInfo,
             password: value
         }))
+
+        if (value && !isStrongPassword(value)) {
+            setStatus(prev => ({
+                ...prev,
+                error: "Password must be at least 8 characters and include at least one number or special character."
+            }))
+        } else {
+            resetStatus()
+        }
     }
+
 
     function getFirstName(value){
         setUserInfo(prevInfo=>({
@@ -368,7 +402,6 @@ export default function App() {
         return (
             <div className="full-page-loading">
                 <div className="loading-spinner-container error">
-                    <div className="error-icon">⚠️</div>
                     <p className="error-message">{status.error}</p>
                     <button 
                         onClick={() => window.location.reload()} 
